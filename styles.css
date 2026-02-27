@@ -110,6 +110,26 @@ body {
   white-space: nowrap;
 }
 
+.lang-btn {
+  border: 1px solid rgba(45, 212, 191, 0.45);
+  background: rgba(45, 212, 191, 0.14);
+  color: #b8ffe9;
+  border-radius: 999px;
+  padding: 4px 9px;
+  text-decoration: none;
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+}
+
+.lang-btn:hover {
+  background: rgba(45, 212, 191, 0.24);
+}
+
 
 nav { display: flex; gap: 16px; }
 
