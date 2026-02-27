@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABG Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>ABG v0.1 — Auto Battler RPG</h1>
+      <p>Browser prototype (waves, auto-combat, loot, upgrades)</p>
+    </header>
+
+    <section class="topbar">
+      <div>Wave: <span id="wave">1</span></div>
+      <div>Gold: <span id="gold">0</span></div>
+      <div>Wins: <span id="wins">0</span></div>
+      <button id="startBtn">Start / Next Wave</button>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Party</h2>
+        <div id="party"></div>
+      </div>
+      <div class="panel">
+        <h2>Enemies</h2>
+        <div id="enemies"></div>
+      </div>
+      <div class="panel">
+        <h2>Shop</h2>
+        <button id="healBtn">Heal Party (10g)</button>
+        <button id="atkBtn">+1 Team ATK (20g)</button>
+        <button id="hpBtn">+5 Team Max HP (20g)</button>
+      </div>
+      <div class="panel">
+        <h2>Combat Log</h2>
+        <div id="log" class="log"></div>
+      </div>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
