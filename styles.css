@@ -110,18 +110,6 @@ body {
   white-space: nowrap;
 }
 
-.lang-btn {
-  border: 1px solid rgba(45,212,191,.45);
-  background: rgba(45,212,191,.12);
-  color: #b8ffe9;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-weight: 700;
-  cursor: pointer;
-  min-height: 30px;
-}
-
-.lang-btn:hover { background: rgba(45,212,191,.2); }
 
 nav { display: flex; gap: 16px; }
 
@@ -428,7 +416,6 @@ h3 { margin-top: 0; }
   }
   .header-actions { max-width: 58vw; }
   .active-game-chip { max-width: 38vw; overflow: hidden; text-overflow: ellipsis; }
-  .lang-btn { padding: 4px 8px; font-size: .82rem; }
   nav { gap: 10px; flex-wrap: wrap; justify-content: center; }
   .actions { flex-wrap: wrap; }
   .game-selector-panel.open { max-height: 780px; }
@@ -464,11 +451,3 @@ h3 { margin-top: 0; }
   .faq-list summary { font-size: .96rem; }
 }
 
-.goog-te-banner-frame.skiptranslate,
-.goog-te-gadget-icon,
-.goog-logo-link,
-.goog-te-gadget span {
-  display: none !important;
-}
-
-body { top: 0 !important; }

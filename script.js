@@ -58,7 +58,7 @@ if (selectorToggle && selectorPanel) {
   const toggleSelector = () => {
     const isOpen = selectorPanel.classList.toggle('open');
     selectorToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    selectorToggle.textContent = isOpen ? 'Game selector ▾' : 'Game selector ▸';
+    selectorToggle.textContent = isOpen ? 'Leikjaval ▾' : 'Leikjaval ▸';
   };
 
   selectorToggle.addEventListener('click', toggleSelector);
@@ -67,29 +67,6 @@ if (selectorToggle && selectorPanel) {
       e.preventDefault();
       toggleSelector();
     }
-  });
-}
-
-function getGoogTransLang() {
-  const m = document.cookie.match(/(?:^|; )googtrans=\/[^/]+\/(\w+)/);
-  return m ? m[1] : 'en';
-}
-
-function setGoogTransLang(lang) {
-  document.cookie = `googtrans=/auto/${lang};path=/`;
-  document.cookie = `googtrans=/auto/${lang};domain=${location.hostname};path=/`;
-  location.reload();
-}
-
-const langToggle = document.getElementById('lang-toggle');
-if (langToggle) {
-  const currentLang = getGoogTransLang();
-  langToggle.textContent = currentLang === 'is' ? 'EN' : 'ÍS';
-  langToggle.title = currentLang === 'is' ? 'Switch to English' : 'Skipta yfir á íslensku';
-
-  langToggle.addEventListener('click', () => {
-    const next = getGoogTransLang() === 'is' ? 'en' : 'is';
-    setGoogTransLang(next);
   });
 }
 
@@ -439,9 +416,9 @@ function renderDynamicFaqs() {
     `;
 
     container.innerHTML = [
-      renderBlock('Early Game', early),
-      renderBlock('Mid Game', mid),
-      renderBlock('End Game', end)
+      renderBlock('Byrjun', early),
+      renderBlock('Miðleikur', mid),
+      renderBlock('Lokaleikur', end)
     ].join('');
   });
 }
