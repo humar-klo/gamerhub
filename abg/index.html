@@ -9,8 +9,8 @@
 <body>
   <main class="app">
     <header>
-      <h1>ABG v0.2 — Auto Battler RPG</h1>
-      <p>Waves • skills • loot-ish upgrades • save/load</p>
+      <h1>ABG v0.3 — Auto Battler RPG</h1>
+      <p>Auto waves • Boss every 5 • Loot • Talents</p>
     </header>
 
     <section class="topbar">
@@ -18,15 +18,15 @@
       <div>Gold <b id="gold">0</b></div>
       <div>Wins <b id="wins">0</b></div>
       <div>Speed <b id="speedLabel">1x</b></div>
-      <button id="startBtn">Start / Next</button>
+      <button id="startBtn">Start Run</button>
       <button id="pauseBtn">Pause</button>
       <button id="speedBtn">Speed</button>
       <button id="resetBtn" class="danger">Reset</button>
     </section>
 
-    <section class="battlefield panel">
+    <section class="battlefield panel forest">
       <div class="lane" id="partyLane"></div>
-      <div class="vs">VS</div>
+      <div class="vs" id="vsLabel">AUTO</div>
       <div class="lane" id="enemyLane"></div>
     </section>
 
@@ -44,6 +44,16 @@
         <button id="healBtn">Heal Party (10g)</button>
         <button id="atkBtn">+1 Team ATK (20g)</button>
         <button id="hpBtn">+5 Team Max HP (20g)</button>
+      </div>
+      <div class="panel">
+        <h2>Talents (<span id="talentPts">0</span>)</h2>
+        <button id="talAtk">+2 Team ATK (1 pt)</button>
+        <button id="talHp">+12 Team Max HP (1 pt)</button>
+        <button id="talCrit">+5% Crit chance (1 pt)</button>
+      </div>
+      <div class="panel">
+        <h2>Latest Loot</h2>
+        <div id="loot" class="log" style="height:130px"></div>
       </div>
       <div class="panel">
         <h2>Combat Log</h2>
