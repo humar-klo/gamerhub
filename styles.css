@@ -111,23 +111,25 @@ body {
 }
 
 .lang-btn {
-  border: 1px solid rgba(45, 212, 191, 0.45);
-  background: rgba(45, 212, 191, 0.14);
-  color: #b8ffe9;
+  border: 1px solid rgba(45, 212, 191, 0.9);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.32), rgba(124, 92, 255, 0.24));
+  color: #ecfffa;
   border-radius: 999px;
-  padding: 4px 9px;
+  padding: 6px 11px;
   text-decoration: none;
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .04em;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
+  min-height: 28px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
 }
 
 .lang-btn:hover {
-  background: rgba(45, 212, 191, 0.24);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.5), rgba(124, 92, 255, 0.35));
 }
 
 
