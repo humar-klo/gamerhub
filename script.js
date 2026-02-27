@@ -70,6 +70,29 @@ if (selectorToggle && selectorPanel) {
   });
 }
 
+function getGoogTransLang() {
+  const m = document.cookie.match(/(?:^|; )googtrans=\/[^/]+\/(\w+)/);
+  return m ? m[1] : 'en';
+}
+
+function setGoogTransLang(lang) {
+  document.cookie = `googtrans=/auto/${lang};path=/`;
+  document.cookie = `googtrans=/auto/${lang};domain=${location.hostname};path=/`;
+  location.reload();
+}
+
+const langToggle = document.getElementById('lang-toggle');
+if (langToggle) {
+  const currentLang = getGoogTransLang();
+  langToggle.textContent = currentLang === 'is' ? 'EN' : 'ÍS';
+  langToggle.title = currentLang === 'is' ? 'Switch to English' : 'Skipta yfir á íslensku';
+
+  langToggle.addEventListener('click', () => {
+    const next = getGoogTransLang() === 'is' ? 'en' : 'is';
+    setGoogTransLang(next);
+  });
+}
+
 const faqData = {
   nms: [
     ["1) Best first-session priorities?", "Repair launch systems, unlock the Anomaly path, and buy 1-2 exosuit slots at each station/anomaly stop."],
