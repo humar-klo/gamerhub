@@ -2,15 +2,15 @@ const SAVE_KEY='abg_v03_save';
 const state={
   wave:1,gold:0,wins:0,teamBuffAtk:0,teamBuffHp:0,running:false,paused:false,tick:null,speed:1,
   autoMode:false,bossPending:false,talentPts:0,critBonus:0,
-  party:[mkHero('Warrior','assets/warrior.svg',64,9,'block'),mkHero('Ranger','assets/ranger.svg',46,12,'crit'),mkHero('Mage','assets/mage.svg',40,13,'burst')],
+  party:[mkHero('Warrior','assets/warrior.svg',78,11,'block'),mkHero('Ranger','assets/ranger.svg',58,14,'crit'),mkHero('Mage','assets/mage.svg',52,15,'burst')],
   enemies:[]
 };
 
 function mkHero(name,icon,hp,atk,skill){return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,gearAtk:0,gearHp:0}};
 function mkEnemy(i,w,boss=false){
   const icons=['assets/mob1.svg','assets/mob2.svg','assets/mob3.svg'];
-  const hp=(boss?60:18)+w*(boss?12:4);
-  const atk=(boss?10:4)+w*(boss?2:1);
+  const hp=(boss?52:14)+w*(boss?9:2);
+  const atk=Math.round((boss?8:3)+w*(boss?1.4:0.6));
   return {name:boss?`Boss ${w}`:`Mob ${i+1}`,icon:icons[i%icons.length],maxHp:hp,hp,atk,alive:true,boss};
 }
 
@@ -118,8 +118,8 @@ function endWave(){
   clearInterval(state.tick); state.running=false;
   const p=alive(state.party).length, e=alive(state.enemies).length;
   if(p>0&&e===0){
-    const reward=(state.bossPending?30:10)+state.wave*3; state.gold+=reward; state.wins++; log(`✅ Cleared wave ${state.wave}. +${reward}g`);
-    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*0.12));}); // small auto-heal between waves
+    const reward=(state.bossPending?36:14)+state.wave*4; state.gold+=reward; state.wins++; log(`✅ Cleared wave ${state.wave}. +${reward}g`);
+    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*0.22));}); // stronger auto-heal between waves
     dropLoot();
     if(state.wave%3===0){state.talentPts++; log('🌟 Talent point gained!')}
     state.wave++; state.enemies=[]; state.bossPending=false; save(); draw();
@@ -127,8 +127,8 @@ function endWave(){
     return;
   }
   if(p===0){
-    log('💀 Party wiped. Reviving for 10g penalty.'); state.gold=Math.max(0,state.gold-10);
-    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.8);h.cd=0});
+    log('💀 Party wiped. Reviving for 6g penalty.'); state.gold=Math.max(0,state.gold-6);
+    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0});
     state.enemies=[]; state.bossPending=false;
   }
   save(); draw();
@@ -138,9 +138,9 @@ $('startBtn').onclick=()=>{ if(!state.autoMode) state.autoMode=true; startWave()
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
 $('resetBtn').onclick=()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); };
-$('healBtn').onclick=()=>{ if(state.gold<10||state.running) return; state.gold-=10; state.party.forEach(h=>{if(h.alive)h.hp=Math.min(heroMaxHp(h),h.hp+15)}); log('Party healed.'); save(); draw(); };
-$('atkBtn').onclick=()=>{ if(state.gold<20||state.running) return; state.gold-=20; state.teamBuffAtk++; log('Team ATK +1'); save(); draw(); };
-$('hpBtn').onclick=()=>{ if(state.gold<20||state.running) return; state.gold-=20; state.teamBuffHp+=5; state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+5)); log('Team Max HP +5'); save(); draw(); };
+$('healBtn').onclick=()=>{ if(state.gold<8||state.running) return; state.gold-=8; state.party.forEach(h=>{if(h.alive)h.hp=Math.min(heroMaxHp(h),h.hp+28)}); log('Party healed.'); save(); draw(); };
+$('atkBtn').onclick=()=>{ if(state.gold<16||state.running) return; state.gold-=16; state.teamBuffAtk+=2; log('Team ATK +2'); save(); draw(); };
+$('hpBtn').onclick=()=>{ if(state.gold<16||state.running) return; state.gold-=16; state.teamBuffHp+=10; state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+10)); log('Team Max HP +10'); save(); draw(); };
 $('talAtk').onclick=()=>{ if(state.talentPts<1) return; state.talentPts--; state.teamBuffAtk+=2; log('Talent: +2 Team ATK'); save(); draw(); };
 $('talHp').onclick=()=>{ if(state.talentPts<1) return; state.talentPts--; state.teamBuffHp+=12; state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+12)); log('Talent: +12 Team Max HP'); save(); draw(); };
 $('talCrit').onclick=()=>{ if(state.talentPts<1) return; state.talentPts--; state.critBonus+=0.05; log('Talent: +5% Crit chance'); save(); draw(); };
