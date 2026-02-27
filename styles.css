@@ -403,7 +403,7 @@ h3 { margin-top: 0; }
   nav { gap: 10px; flex-wrap: wrap; justify-content: center; }
   .actions { flex-wrap: wrap; }
   .game-selector-panel.open { max-height: 680px; }
-  .tab-buttons { flex-direction: column; }
+  .tab-buttons { flex-direction: column; align-items: flex-start; }
   .tab-btn { width: auto; text-align: left; align-self: flex-start; }
   .footer { flex-direction: column; align-items: flex-start; }
 }
