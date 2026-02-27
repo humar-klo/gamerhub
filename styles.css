@@ -225,10 +225,17 @@ h3 { margin-top: 0; }
   border: 1px solid var(--border);
   background: rgba(255,255,255,0.03);
   color: var(--text);
-  padding: 10px 14px;
+  padding: 11px 14px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.tab-btn:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.7);
+  outline-offset: 2px;
 }
 
 .tab-btn.active {
@@ -269,8 +276,9 @@ h3 { margin-top: 0; }
 .faq-list summary {
   list-style: none;
   cursor: pointer;
-  padding: 14px 16px;
+  padding: 14px 40px 14px 16px;
   font-weight: 600;
+  line-height: 1.45;
   color: #dfe5ff;
   position: relative;
 }
@@ -402,7 +410,7 @@ h3 { margin-top: 0; }
   .active-game-chip { max-width: 45vw; overflow: hidden; text-overflow: ellipsis; }
   nav { gap: 10px; flex-wrap: wrap; justify-content: center; }
   .actions { flex-wrap: wrap; }
-  .game-selector-panel.open { max-height: 680px; }
+  .game-selector-panel.open { max-height: 780px; }
   .tab-buttons {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -416,6 +424,21 @@ h3 { margin-top: 0; }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: .92rem;
   }
+  .faq-list details p { font-size: .97rem; }
   .footer { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 520px) {
+  .hero,
+  .section,
+  .footer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .tab-buttons { grid-template-columns: 1fr; }
+  .tab-btn { font-size: .95rem; }
+  .faq-list summary { font-size: .96rem; }
 }
