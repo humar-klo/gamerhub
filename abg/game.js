@@ -1,8 +1,8 @@
 const SAVE_KEY='abg_v02_save';
-const state={wave:1,gold:0,wins:0,teamBuffAtk:0,teamBuffHp:0,running:false,paused:false,tick:null,speed:1,party:[mkHero('Warrior','🛡️',56,8,'block'),mkHero('Ranger','🏹',40,11,'crit'),mkHero('Mage','✨',34,12,'burst')],enemies:[]};
+const state={wave:1,gold:0,wins:0,teamBuffAtk:0,teamBuffHp:0,running:false,paused:false,tick:null,speed:1,party:[mkHero('Warrior','assets/warrior.svg',56,8,'block'),mkHero('Ranger','assets/ranger.svg',40,11,'crit'),mkHero('Mage','assets/mage.svg',34,12,'burst')],enemies:[]};
 
 function mkHero(name,icon,hp,atk,skill){return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0}};
-function mkEnemy(i,w){const base=20+w*7;const icons=['👹','☠️','🦂','🧟'];return {name:`Mob ${i+1}`,icon:icons[i%icons.length],maxHp:base,hp:base,atk:5+w*2,alive:true}};
+function mkEnemy(i,w){const base=20+w*7;const icons=['assets/mob1.svg','assets/mob2.svg','assets/mob3.svg'];return {name:`Mob ${i+1}`,icon:icons[i%icons.length],maxHp:base,hp:base,atk:5+w*2,alive:true}};
 const $=id=>document.getElementById(id);
 const alive=a=>a.filter(x=>x.alive);
 const pick=a=>{const x=alive(a);return x[Math.floor(Math.random()*x.length)]};
@@ -14,7 +14,7 @@ function hpPct(u){return Math.max(0,Math.min(100,(u.hp/Math.max(1,u.maxHp+ (u.ic
 function drawList(id,arr,isParty=true){
   $(id).innerHTML=arr.map(u=>`<div class='unit ${u.alive?'':'dead'}'>
       <div>
-        <div class='name'>${u.icon||'•'} ${u.name}</div>
+        <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}</div>
         <div class='hpbar'><span style='width:${isParty?Math.max(0,u.hp)/(u.maxHp+state.teamBuffHp)*100:Math.max(0,u.hp)/u.maxHp*100}%'></span></div>
       </div>
       <div>ATK ${isParty?u.atk+state.teamBuffAtk:u.atk}</div>
@@ -22,8 +22,8 @@ function drawList(id,arr,isParty=true){
 }
 
 function drawBattlefield(){
-  $('partyLane').innerHTML=state.party.map(u=>`<div class='sprite ${u.alive?'':'dead'}'>${u.icon}</div>`).join('');
-  $('enemyLane').innerHTML=state.enemies.map(u=>`<div class='sprite enemy ${u.alive?'':'dead'}'>${u.icon}</div>`).join('');
+  $('partyLane').innerHTML=state.party.map(u=>`<div class='sprite ${u.alive?'':'dead'}'><img src='${u.icon}' alt=''></div>`).join('');
+  $('enemyLane').innerHTML=state.enemies.map(u=>`<div class='sprite enemy ${u.alive?'':'dead'}'><img src='${u.icon}' alt=''></div>`).join('');
 }
 
 function draw(){
