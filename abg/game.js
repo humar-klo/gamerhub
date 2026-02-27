@@ -139,10 +139,21 @@ $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.pause
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
 $('resetBtn').onclick=()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); };
 $('healBtn').onclick=()=>{ if(state.gold<8||state.running) return; state.gold-=8; state.party.forEach(h=>{if(h.alive)h.hp=Math.min(heroMaxHp(h),h.hp+28)}); log('Party healed.'); save(); draw(); };
+$('reviveBtn').onclick=()=>{
+  if(state.running||state.gold<14) return;
+  const fallen=state.party.find(h=>!h.alive||h.hp<=0);
+  if(!fallen){ log('No KO ally to revive.'); return; }
+  state.gold-=14;
+  fallen.alive=true;
+  fallen.cd=0;
+  fallen.hp=Math.ceil(heroMaxHp(fallen)*0.45);
+  log(`✨ Revived ${fallen.name} with ${fallen.hp} HP.`);
+  save(); draw();
+};
 $('atkBtn').onclick=()=>{ if(state.gold<16||state.running) return; state.gold-=16; state.teamBuffAtk+=2; log('Team ATK +2'); save(); draw(); };
 $('hpBtn').onclick=()=>{ if(state.gold<16||state.running) return; state.gold-=16; state.teamBuffHp+=10; state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+10)); log('Team Max HP +10'); save(); draw(); };
 $('talAtk').onclick=()=>{ if(state.talentPts<1) return; state.talentPts--; state.teamBuffAtk+=2; log('Talent: +2 Team ATK'); save(); draw(); };
 $('talHp').onclick=()=>{ if(state.talentPts<1) return; state.talentPts--; state.teamBuffHp+=12; state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+12)); log('Talent: +12 Team Max HP'); save(); draw(); };
 $('talCrit').onclick=()=>{ if(state.talentPts<1) return; state.talentPts--; state.critBonus+=0.05; log('Talent: +5% Crit chance'); save(); draw(); };
 
-load(); draw(); log('v0.3 ready. Press Start Run. Waves auto-advance until boss waves (5,10,15...).');
+load(); draw(); log('v0.4 ready. Press Start Run. Waves auto-advance until boss waves (5,10,15...).');
