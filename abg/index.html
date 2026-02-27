@@ -9,15 +9,25 @@
 <body>
   <main class="app">
     <header>
-      <h1>ABG v0.1 — Auto Battler RPG</h1>
-      <p>Browser prototype (waves, auto-combat, loot, upgrades)</p>
+      <h1>ABG v0.2 — Auto Battler RPG</h1>
+      <p>Waves • skills • loot-ish upgrades • save/load</p>
     </header>
 
     <section class="topbar">
-      <div>Wave: <span id="wave">1</span></div>
-      <div>Gold: <span id="gold">0</span></div>
-      <div>Wins: <span id="wins">0</span></div>
-      <button id="startBtn">Start / Next Wave</button>
+      <div>Wave <b id="wave">1</b></div>
+      <div>Gold <b id="gold">0</b></div>
+      <div>Wins <b id="wins">0</b></div>
+      <div>Speed <b id="speedLabel">1x</b></div>
+      <button id="startBtn">Start / Next</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="speedBtn">Speed</button>
+      <button id="resetBtn" class="danger">Reset</button>
+    </section>
+
+    <section class="battlefield panel">
+      <div class="lane" id="partyLane"></div>
+      <div class="vs">VS</div>
+      <div class="lane" id="enemyLane"></div>
     </section>
 
     <section class="grid">
@@ -30,7 +40,7 @@
         <div id="enemies"></div>
       </div>
       <div class="panel">
-        <h2>Shop</h2>
+        <h2>Camp Shop</h2>
         <button id="healBtn">Heal Party (10g)</button>
         <button id="atkBtn">+1 Team ATK (20g)</button>
         <button id="hpBtn">+5 Team Max HP (20g)</button>
