@@ -356,4 +356,38 @@ function renderDynamicFaqs() {
 }
 
 renderDynamicFaqs();
+
+function sectionStaticFaq(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const list = panel.querySelector('.faq-list');
+  if (!list) return;
+
+  // Skip if already sectioned
+  if (list.querySelector('.phase-block')) return;
+
+  const details = Array.from(list.querySelectorAll('details'));
+  if (!details.length) return;
+
+  const chunks = [details.slice(0, 10), details.slice(10, 20), details.slice(20, 30)];
+  const titles = ['Early Game', 'Mid Game', 'End Game'];
+
+  list.innerHTML = '';
+  chunks.forEach((chunk, idx) => {
+    const block = document.createElement('div');
+    block.className = 'phase-block';
+
+    const title = document.createElement('div');
+    title.className = 'phase-title';
+    title.textContent = titles[idx];
+    block.appendChild(title);
+
+    chunk.forEach(item => block.appendChild(item));
+    list.appendChild(block);
+  });
+}
+
+sectionStaticFaq('panel-nms');
+sectionStaticFaq('panel-nioh');
+
 console.log('Night Vibes expanded game tabs loaded ✅');
