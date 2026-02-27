@@ -71,6 +71,74 @@ if (selectorToggle && selectorPanel) {
 }
 
 const faqData = {
+  nms: [
+    ["1) Best first-session priorities?", "Repair launch systems, unlock the Anomaly path, and buy 1-2 exosuit slots at each station/anomaly stop."],
+    ["2) Fastest reliable early Units?", "Install scanner upgrades early and chain station missions that overlap with exploration you already plan to do."],
+    ["3) How should I handle early inventory pain?", "Keep active crafting inputs in regular slots, bulk mats in cargo, and sell low-value clutter every station visit."],
+    ["4) Is a base mandatory right away?", "Build a compact utility base first (teleporter, refiner, storage, power), then expand only after routes are stable."],
+    ["5) Best early multitool focus?", "Scanner income + mining-beam comfort first, then one consistent combat line."],
+    ["6) Solo or multiplayer for week one?", "Solo is fully viable; add co-op only if it speeds your goals rather than distracting routing."],
+    ["7) How do I avoid resource starvation?", "Never spend all core fuels at once; keep emergency launch fuel and life-support inputs before long trips."],
+    ["8) What story path unlocks key systems?", "Follow the early Artemis/Awakenings flow until anomaly and core utility systems are consistently available."],
+    ["9) Should I chase rare ships immediately?", "Not yet. Stabilize income and slots first so ship hunts are efficient instead of disruptive."],
+    ["10) Most dependable early rule?", "Progression over perfection: unlock systems first, optimize later."],
+
+    ["11) What defines healthy midgame in NMS?", "Stable nanite loop, reliable unit income, and logistics that let you switch activities quickly."],
+    ["12) Best midgame money routes?", "Pick one primary loop (frigate expeditions, salvage loops, or crafted goods) and optimize it end-to-end."],
+    ["13) How should I use freighters midgame?", "Treat freighter as moving HQ: storage centralization, expedition uptime, and portable build utility."],
+    ["14) Can I move bases cleanly?", "Yes—rebuild in the new location, transfer essential infrastructure, and preserve teleport links for old farms."],
+    ["15) How do I keep upgrades patch-proof?", "Prioritize universal value: slot count, logistics speed, survivability, and consistent income over gimmick loops."],
+    ["16) Best way to manage Sentinels?", "Avoid prolonged escalation unless intentional; break line-of-sight and reset when objective is exploration or farming."],
+    ["17) How many ships should I maintain?", "Keep role-based ships only if each has clear purpose; otherwise maintenance overhead slows progression."],
+    ["18) Are settlements a main progression engine?", "Usually side content value, not top-tier account acceleration."],
+    ["19) Should I use coordinates/glyphs midgame?", "Use them for targeted hunts or bottlenecks; free exploration remains best for discovery sessions."],
+    ["20) Midgame anti-burnout habit?", "Rotate one economy loop, one exploration goal, and one build task per session."],
+
+    ["21) Endgame resource strategy?", "Automate extraction/refining where possible, then spend playtime on high-value goals, not manual grind."],
+    ["22) Best long-term optimization priority?", "Route compression: fewer menu trips, fewer transfers, faster travel between recurring objectives."],
+    ["23) What should I min-max first?", "Main ship utility + exosuit slots + freighter logistics before cosmetic mega-projects."],
+    ["24) Are expeditions worth scheduling around?", "Yes for unique account rewards; verify dates through official channels and prioritize milestone efficiency."],
+    ["25) How do I prep for major updates safely?", "Keep spare key resources and avoid overcommitting to one brittle farm pipeline."],
+    ["26) Best endgame session format?", "Start with maintenance (expeditions/storage), run one focused objective, finish with optional exploration."],
+    ["27) Is permadeath worth trying?", "Great if you enjoy planning discipline; keep risk windows short and exits preplanned."],
+    ["28) How to keep late game fun?", "Set themed projects (fleet, base, fauna, photo routes) instead of pure efficiency grind."],
+    ["29) Reliable expert rule?", "Build systems that still work when your mood, patch, or objective changes."],
+    ["30) Core dependable advice?", "Use NMS as a logistics game first and a collection game second; progression becomes smoother and less fragile."]
+  ],
+  nioh: [
+    ["1) Is this guidance safe if Nioh 3 details change?", "Yes—focus on proven Nioh fundamentals: Ki control, spacing, defensive discipline, and punish timing."],
+    ["2) Biggest early error?", "Spending all Ki on offense and getting caught in recovery with no defensive option."],
+    ["3) What should I train first?", "Guard timing, Ki pulse rhythm, and one reliable combo route per stance."],
+    ["4) Should beginners lock one weapon?", "Main one weapon first, carry a secondary for matchup coverage, and avoid constant swapping."],
+    ["5) Light or heavy loadout early?", "Choose the load that preserves movement and Ki comfort; control beats raw armor greed."],
+    ["6) Are magic/ninjutsu tools optional?", "Optional but high-value; even light utility investment improves consistency and recovery windows."],
+    ["7) How should I spend early stats?", "Meet requirements, stabilize survivability/Ki, then scale damage after baseline comfort is stable."],
+    ["8) Best way to learn bosses?", "Run short attempts focused on identifying 2-3 safe punish windows and retreat patterns."],
+    ["9) Dodge only or block too?", "Use both. Mixed defense is safer than committing to one answer for every pattern."],
+    ["10) Core early-game rule?", "Never enter a dangerous exchange without enough Ki to defend afterward."],
+
+    ["11) Midgame progression focus?", "Refine consistency: cleaner stance transitions, fewer greedy strings, better utility timing."],
+    ["12) Should I hard-optimize gear midgame?", "Target high-impact upgrades first; full min-max can wait until build identity is fixed."],
+    ["13) How important are set bonuses midgame?", "Helpful, but only if they support your actual combat rhythm and survivability."],
+    ["14) Soul matching now or later?", "Use selectively; avoid heavy resource burn on gear you’ll replace soon."],
+    ["15) How do I handle repeated deaths?", "Lower complexity: shorten combos, simplify tools, and re-establish safe defensive habits."],
+    ["16) Is co-op good for learning?", "Great for smoothing progression, but still practice solo reps to learn enemy telegraphs cleanly."],
+    ["17) Best loot management habit?", "Dismantle/cull aggressively with clear rules so inventory never blocks session momentum."],
+    ["18) Are status builds reliable?", "Yes when they support uptime and safety, not when they force risky overextensions."],
+    ["19) Midgame skill-tree priority?", "Core passives, Ki economy, and repeatable bread-and-butter options before niche tech."],
+    ["20) Midgame efficiency benchmark?", "Fewer avoidable hits, faster resets, and consistent clears under pressure."],
+
+    ["21) When to start full min-max?", "After campaign stability, when gear turnover slows and your playstyle is locked in."],
+    ["22) Endgame build philosophy?", "Optimize for reliability first, then stack damage once defense and Ki flow are solved."],
+    ["23) How often should I pivot builds?", "Deliberately and rarely; frequent pivots usually erase mastery gains."],
+    ["24) What separates strong players late game?", "Decision quality under pressure: when to disengage, reset Ki, and re-enter safely."],
+    ["25) Is ranged utility still relevant endgame?", "Yes—for controlled pulls, tempo resets, and safer multi-target handling."],
+    ["26) Best pre-boss checklist?", "Load/agility check, healing stock, shortcut readiness, utility setup, and first-phase plan."],
+    ["27) How to patch-proof your setup?", "Keep one flexible slot in gear/tooling so balance changes don’t invalidate the whole build."],
+    ["28) Best anti-tilt routine?", "After two sloppy runs, pause, review one mistake category, and return with a single correction target."],
+    ["29) Reliable long-term progression order?", "Ki stability -> defense consistency -> punish uptime -> damage optimization."],
+    ["30) Core dependable advice?", "Master tempo control first; everything else in Nioh-style combat scales from that."]
+  ],
   hytale: [
     ["1) Best first-week focus?", "Set up one stable progression loop first: reliable gear upgrades, movement comfort, and resource flow."],
     ["2) Biggest early mistake players make?", "Trying to optimize everything at once instead of mastering one complete loop."],
@@ -357,37 +425,7 @@ function renderDynamicFaqs() {
 
 renderDynamicFaqs();
 
-function sectionStaticFaq(panelId) {
-  const panel = document.getElementById(panelId);
-  if (!panel) return;
-  const list = panel.querySelector('.faq-list');
-  if (!list) return;
-
-  // Skip if already sectioned
-  if (list.querySelector('.phase-block')) return;
-
-  const details = Array.from(list.querySelectorAll('details'));
-  if (!details.length) return;
-
-  const chunks = [details.slice(0, 10), details.slice(10, 20), details.slice(20, 30)];
-  const titles = ['Early Game', 'Mid Game', 'End Game'];
-
-  list.innerHTML = '';
-  chunks.forEach((chunk, idx) => {
-    const block = document.createElement('div');
-    block.className = 'phase-block';
-
-    const title = document.createElement('div');
-    title.className = 'phase-title';
-    title.textContent = titles[idx];
-    block.appendChild(title);
-
-    chunk.forEach(item => block.appendChild(item));
-    list.appendChild(block);
-  });
-}
-
-sectionStaticFaq('panel-nms');
-sectionStaticFaq('panel-nioh');
+// Maintainer note: every game should keep exactly 30 entries (10 early, 10 mid, 10 end)
+// so stage blocks stay structurally consistent across tabs.
 
 console.log('Night Vibes expanded game tabs loaded ✅');
