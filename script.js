@@ -17,7 +17,8 @@ const tabPanels = {
   kcd2: document.getElementById('panel-kcd2'),
   wwm: document.getElementById('panel-wwm'),
   fo76: document.getElementById('panel-fo76'),
-  elden: document.getElementById('panel-elden')
+  elden: document.getElementById('panel-elden'),
+  tq2: document.getElementById('panel-tq2')
 };
 
 const tabLabels = {
@@ -30,7 +31,8 @@ const tabLabels = {
   kcd2: "Kingdom Come: Deliverance 2",
   wwm: "Where Winds Meet",
   fo76: "Fallout 76",
-  elden: "Elden Ring"
+  elden: "Elden Ring",
+  tq2: "Titan Quest 2"
 };
 
 function switchTab(tabName) {
@@ -396,6 +398,40 @@ const faqData = {
     ["28) Most dependable progression order?", "Explore, upgrade, return—don’t brute-force walls with underleveled tools."],
     ["29) Endgame prep checklist?", "High Vigor, refined flask setup, upgraded main/backup weapon, and practiced stamina discipline."],
     ["30) Core dependable advice?", "Build for consistency first, damage second; patience and preparation win the long game."]
+  ],
+  tq2: [
+    ["1) Best first-hour priority?", "Choose a clear damage plan, equip dependable survivability tools, and avoid over-investing in random early drops."],
+    ["2) Most common early mistake?", "Splitting points across too many directions before your core build is online."],
+    ["3) Should I follow a build guide immediately?", "Use a simple framework early, then adapt after you understand your skill scaling and gear needs."],
+    ["4) What matters more early: skill points or gear?", "Both matter, but weapon/gear upgrades often give the fastest immediate power spikes."],
+    ["5) Is kiting better than facetanking early?", "Usually yes. Positioning and uptime beat risky trades while your defenses are still thin."],
+    ["6) How do I spend early resources safely?", "Invest in core upgrades first and avoid expensive side experiments until your clear speed is stable."],
+    ["7) Should I clear every side area right away?", "Only if rewards fit your build plan; skip low-value detours that slow progression."],
+    ["8) Best early survivability habit?", "Maintain resistances and avoid entering new zones with outdated defensive gear."],
+    ["9) Is farming early worth it?", "Short targeted farms are fine, but over-farming early can waste time versus natural progression."],
+    ["10) Early-game golden rule?", "Stability first: one coherent build path, one reliable damage loop, one defensive backup."],
+
+    ["11) What defines healthy mid-game progression?", "Consistent clears, controlled deaths, and steady upgrade momentum without heavy resource panic."],
+    ["12) When should I start serious item optimization?", "Once your build identity is fixed and your core slots stop changing every zone."],
+    ["13) How many skills should I actively scale mid-game?", "One primary damage engine plus utility/survival support is usually strongest."],
+    ["14) Should I respec frequently?", "Only for clear performance gains; constant respecs usually erase momentum."],
+    ["15) Best way to evaluate loot quickly?", "Check if it solves a bottleneck: damage uptime, resistance gap, sustain issue, or mobility weakness."],
+    ["16) Is trading mandatory for progress?", "Not always, but smart trading can significantly accelerate mid-game gearing."],
+    ["17) How do I avoid stash chaos?", "Sort by purpose: upgrade candidates, crafting bases, sale items, and immediate build pieces."],
+    ["18) What causes most mid-game walls?", "Under-invested defenses, weak scaling links, and trying to force high-risk content too early."],
+    ["19) Best anti-burnout approach in mid-game?", "Alternate one push session, one cleanup session, and one targeted farm session."],
+    ["20) Mid-game rule of thumb?", "Fix weakest links first; chasing perfect best-in-slot too early slows real progression."],
+
+    ["21) What should endgame optimization prioritize first?", "Reliability under pressure: survivability layers, sustain, and repeatable clear consistency."],
+    ["22) Is perfect gear chasing worth it immediately?", "Only after baseline performance is already strong and stable."],
+    ["23) How do I know my build is truly endgame-ready?", "It clears target content consistently without relying on flawless play every run."],
+    ["24) Best way to prepare for patch shifts?", "Keep flexible currency/material reserves and avoid overcommitting to one fragile meta route."],
+    ["25) How often should I re-evaluate build choices?", "After major balance changes or when returns per upgrade start dropping sharply."],
+    ["26) Should I pivot build late if meta changes?", "Pivot only with a clear gain plan; panic swaps usually lose more than they gain."],
+    ["27) Is speed-farming always optimal in endgame?", "Only if your survival remains stable; dead runs kill efficiency."],
+    ["28) Best high-level loot strategy?", "Farm content your build clears fastest with low risk, then reinvest into bottleneck slots."],
+    ["29) Most dependable advanced-player habit?", "Track your own performance data and tune based on evidence, not hype."],
+    ["30) Core dependable advice?", "Build a resilient engine first, then optimize damage on top of proven stability."]
   ]
 };
 

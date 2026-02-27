@@ -17,7 +17,8 @@ const tabPanels = {
   kcd2: document.getElementById('panel-kcd2'),
   wwm: document.getElementById('panel-wwm'),
   fo76: document.getElementById('panel-fo76'),
-  elden: document.getElementById('panel-elden')
+  elden: document.getElementById('panel-elden'),
+  tq2: document.getElementById('panel-tq2')
 };
 
 const tabLabels = {
@@ -30,7 +31,8 @@ const tabLabels = {
   kcd2: "Kingdom Come: Deliverance 2",
   wwm: "Where Winds Meet",
   fo76: "Fallout 76",
-  elden: "Elden Ring"
+  elden: "Elden Ring",
+  tq2: "Titan Quest 2"
 };
 
 function switchTab(tabName) {
@@ -396,6 +398,40 @@ const faqData = {
     ["28) Áreiðanlegasta framvinda order?", "Explore, uppfærsla, return—do not brute-force walls með underleveled tools."],
     ["29) Tékklisti fyrir lokaleik?", "High Vigor, refined flask setup, upgraded main/backup weapon, og practiced stamina discipline."],
     ["30) Kjarnaráð sem þú getur treyst?", "Build fyrir stöðugleiki fyrst, skaði annað; patience og preparation win the long game."]
+  ],
+  tq2: [
+    ["1) Mikilvægasti fókus í upphafi?", "Veldu skýra skaðaleið, tryggðu grunnlifun og forðastu að dreifa auðlindum í tilviljanakenndan búnað."],
+    ["2) Algengustu byrjendamistökin?", "Að dreifa stigum of víða áður en kjarna-buildið er komið í gang."],
+    ["3) Ætti ég að fylgja build-leiðbeiningu strax?", "Einföld leiðbeining snemma hjálpar, en lagaðu hana svo að hún passi þínum leikstíl."],
+    ["4) Hvað skiptir meira máli snemma: gear eða stig?", "Uppfærður búnaður gefur oft stærri kraftaukningu strax en smáar stigabreytingar."],
+    ["5) Er betra að kite-a en að trade-a högg?", "Yfirleitt já. Góð staðsetning og stöðugur skaði eru öruggari en áhættusöm skipti."],
+    ["6) Hvernig eyði ég auðlindum skynsamlega?", "Settu fyrst í kjarna-uppfærslur og frestaðu dýrum hliðarprófunum."],
+    ["7) Ætti ég að klára öll hliðarsvæði strax?", "Aðeins ef umbunin styður buildið þitt; annars hægir það á framvindu."],
+    ["8) Besta lifunarvenjan í byrjun?", "Haltu vörnum/resistances í lagi og farðu ekki vanbúinn inn á ný svæði."],
+    ["9) Er farming snemma þess virði?", "Stutt markviss farming getur hjálpað, en of mikill grind snemma er oft óhagkvæmur."],
+    ["10) Gullna reglan í byrjun?", "Stöðugleiki fyrst: eitt skýrt build, ein áreiðanleg skaðahringrás, ein varaleið í vörn."],
+
+    ["11) Hvað einkennir góðan miðleik?", "Stöðugar hreinsanir, færri óþarfa dauðsföll og jöfn uppfærslumótun."],
+    ["12) Hvenær á ég að byrja alvöru gear-fínstillingu?", "Þegar build-identitið er orðið skýrt og lykilslott hætta að skiptast út stöðugt."],
+    ["13) Hversu mörg skill ætti ég að skala í miðleik?", "Ein aðal skaðavél og stuðningur fyrir utility/lifun er oft sterkast."],
+    ["14) Ætti ég að respec-a oft?", "Aðeins þegar breytingin gefur skýran ávinning; tíðar breytingar eyða framvindu."],
+    ["15) Hvernig met ég loot hratt?", "Skoðaðu hvort það lagar flöskuháls: skaði, varnir, sustain eða hreyfanleika."],
+    ["16) Er trading nauðsynlegt?", "Ekki alltaf, en snjallt trading getur hraðað miðleiknum verulega."],
+    ["17) Hvernig forðast ég stash-rugl?", "Flokkaðu eftir hlutverki: uppfærslukandidatar, crafting-basar, söluvara, kjarnahlutir."],
+    ["18) Hvað veldur algengustu miðleiksvandum?", "Veikar varnir, rofin scaling-tenging og að þröngva of erfiðu efni of snemma."],
+    ["19) Besta anti-burnout nálgunin?", "Skiptu á milli push-lotu, cleanup-lotu og markvissrar farming-lotu."],
+    ["20) Þumalputtaregla í miðleik?", "Lagaðu veikasta hlekkinn fyrst; fullkomið BIS of snemma hægir á raunframvindu."],
+
+    ["21) Hver er forgangur í lokaleiksfínstillingu?", "Áreiðanleiki undir pressu: varnalög, sustain og stöðug hreinsun."],
+    ["22) Er þess virði að elta fullkomið gear strax?", "Aðeins þegar grunnuppsetningin er þegar sterk og stöðug."],
+    ["23) Hvernig veit ég að buildið er lokaleikstilbúið?", "Það klárar markefni stöðugt án þess að krefjast fullkominnar keyrslu í hvert skipti."],
+    ["24) Besta leiðin til að undirbúa patch-breytingar?", "Haltu sveigjanlegum varasjóði og forðastu eina brothætta meta-leið."],
+    ["25) Hversu oft á ég að endurmeta buildið?", "Eftir stærri jafnvægisbreytingar eða þegar ávinningur á uppfærslu minnkar verulega."],
+    ["26) Ætti ég að skipta um build seint ef meta breytist?", "Aðeins með skýra áætlun um nettóávinning; panik-skipti tapa oft meiri tíma."],
+    ["27) Er speed-farming alltaf best í lokaleik?", "Aðeins ef lifun helst stöðug; dauðar keyrslur drepa skilvirkni."],
+    ["28) Besta loot-stefna á háu stigi?", "Farm-a efni sem buildið þitt hreinsar hratt og örugglega, endurfjárfestu svo í flöskuhálsum."],
+    ["29) Áreiðanlegasta venja lengra kominna?", "Mældu eigin niðurstöður og stilltu út frá gögnum, ekki hype-i."],
+    ["30) Kjarnaráð sem þú getur treyst?", "Byggðu fyrst sterka og seiga vél, síðan skalaðu skaða ofan á stöðugan grunn."]
   ]
 };
 
@@ -411,7 +447,7 @@ function renderDynamicFaqs() {
     const renderBlock = (title, arr) => `
       <div class="phase-block">
         <div class="phase-title">${title}</div>
-        ${arr.kort(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}
+        ${arr.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}
       </div>
     `;
 
