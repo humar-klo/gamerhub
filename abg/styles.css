@@ -90,8 +90,7 @@ input,select{background:#0b1020;color:#e8edff;border:1px solid #2a355f;padding:8
 .pdoll{grid-area:paperdoll;position:relative;min-height:170px;border:1px solid #2a355f;border-radius:12px;background:radial-gradient(circle at 50% 25%,rgba(135,167,255,.2),rgba(8,12,24,.85));display:flex;align-items:center;justify-content:center;overflow:hidden}
 .pdoll-hero{width:88px;height:88px;border-radius:14px;border:1px solid #3c4f85;box-shadow:0 8px 18px rgba(0,0,0,.35);object-fit:cover;z-index:1}
 .pdoll-label{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:.78rem;opacity:.85}
-.loot-panel{display:flex;flex-direction:column}
-.loot-panel #loot{flex:1;height:auto;min-height:260px}
+.loot-panel #loot{height:260px;overflow:auto}
 
 .modal{position:fixed;inset:0;background:rgba(3,6,12,.72);display:grid;place-items:center;z-index:30}
 .modal.hidden{display:none}
