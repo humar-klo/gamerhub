@@ -27,6 +27,24 @@ body {
     var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  line-height: 1.5;
+}
+
+.skip-link {
+  position: absolute;
+  left: 14px;
+  top: -40px;
+  background: #e8ecff;
+  color: #04060d;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 10px;
 }
 
 .bg-glow {
@@ -130,6 +148,11 @@ body {
 
 .lang-btn:hover {
   background: linear-gradient(135deg, rgba(45, 212, 191, 0.5), rgba(124, 92, 255, 0.35));
+}
+
+.lang-btn:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.9);
+  outline-offset: 2px;
 }
 
 
@@ -451,10 +474,10 @@ h3 { margin-top: 0; }
   .tab-btn {
     width: 100%;
     text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
     font-size: .92rem;
+    line-height: 1.35;
+    min-height: 52px;
   }
   .faq-list details p { font-size: .97rem; }
   .footer { flex-direction: column; align-items: flex-start; }
@@ -468,8 +491,8 @@ h3 { margin-top: 0; }
     padding-right: 14px;
   }
 
-  .tab-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .tab-btn { font-size: .9rem; padding: 10px 10px; }
+  .tab-buttons { grid-template-columns: 1fr; gap: 6px; }
+  .tab-btn { font-size: .92rem; padding: 10px 10px; }
   .faq-list summary { font-size: .96rem; }
 }
 
