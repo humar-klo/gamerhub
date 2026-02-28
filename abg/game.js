@@ -913,8 +913,7 @@ function openTalentModal(i){
 }
 function renderTalentModal(){
   const h=state.party[state.talentHeroIdx]; if(!h) return;
-  $('talentHeroTitle').textContent=`${h.name} Talent Tree`;
-  $('talentHeroPts').innerHTML=`<div class='stat-row'><span>Talent points</span><span>${h.talentPts||0}</span></div><div class='stat-row'><span>Class</span><span>${h.advClass||'Base'}</span></div>`;
+  $('talentHeroTitle').textContent=`${h.name} Talent Tree • ${h.talentPts||0} pts`;
   const baseKeys=['secondWind','bloodlust','echo','battleRhythm','giantSlayer'];
   const baseButtons=baseKeys.map((k)=>{
     const meta=talentMeta(k);
