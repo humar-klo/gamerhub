@@ -34,11 +34,29 @@ function setHeroLevel(hero,targetLevel){
   hero.hp=heroMaxHp(hero);
   hero.alive=true;
 }
+function heroIconFor(name,advClass=null){
+  const advIcons={
+    Paladin:'assets/paladin-human.svg',
+    Berserker:'assets/berserker-human.svg',
+    Sniper:'assets/sniper-human.svg',
+    Warden:'assets/warden-human.svg',
+    Sorcerer:'assets/sorcerer-human.svg',
+    Warlock:'assets/warlock-human.svg',
+    Pope:'assets/pope-human.svg',
+    'Cult Leader':'assets/cult-leader-human.svg'
+  };
+  if(advClass && advIcons[advClass]) return advIcons[advClass];
+  if(name==='Warrior') return 'assets/warrior-human.svg';
+  if(name==='Ranger') return 'assets/ranger-human.svg';
+  if(name==='Priest') return 'assets/priest-human.svg';
+  return 'assets/mage-human.svg';
+}
+
 function heroTemplate(cls){
-  if(cls==='Warrior') return mkHero('Warrior','assets/warrior-human.svg',78,11,'block');
-  if(cls==='Ranger') return mkHero('Ranger','assets/ranger-human.svg',58,14,'crit');
-  if(cls==='Priest') return mkHero('Priest','assets/mage-human.svg',64,10,'holy');
-  return mkHero('Mage','assets/mage-human.svg',52,15,'burst');
+  if(cls==='Warrior') return mkHero('Warrior',heroIconFor('Warrior'),78,11,'block');
+  if(cls==='Ranger') return mkHero('Ranger',heroIconFor('Ranger'),58,14,'crit');
+  if(cls==='Priest') return mkHero('Priest',heroIconFor('Priest'),64,10,'holy');
+  return mkHero('Mage',heroIconFor('Mage'),52,15,'burst');
 }
 
 function openHeroUnlockChoice(){
@@ -988,7 +1006,9 @@ $('party').onclick=(ev)=>{
   if(tbtn){ openTalentModal(Number(tbtn.dataset.openTal)); return; }
   const btn=ev.target.closest('button[data-class]'); if(!btn) return;
   const i=Number(btn.dataset.i), h=state.party[i]; if(!h||h.advClass) return;
-  h.advClass=btn.dataset.class; log(`⚔️ ${h.name} advanced to ${h.advClass}`); save(); draw();
+  h.advClass=btn.dataset.class;
+  h.icon=heroIconFor(h.name,h.advClass);
+  log(`⚔️ ${h.name} advanced to ${h.advClass}`); save(); draw();
 };
 $('equipHeroList').onclick=(ev)=>{ const b=ev.target.closest('button[data-ehero]'); if(!b) return; state.equipHeroIdx=Number(b.dataset.ehero); drawEquipUI(); };
 $('upgradeHeroList').onclick=(ev)=>{ const b=ev.target.closest('button[data-uphero]'); if(!b) return; state.upgradeHeroIdx=Number(b.dataset.uphero); drawUpgradeUI(); };
@@ -1008,6 +1028,7 @@ function normalizeLoadedState(){
     ['secondWind','bloodlust','echo','battleRhythm','giantSlayer','adv1','adv2','adv3'].forEach(k=>{ if(h.talents[k]==null) h.talents[k]=false; });
     if(h.talents.atkPctLv==null) h.talents.atkPctLv=0;
     if(h.talents.hpPctLv==null) h.talents.hpPctLv=0;
+    h.icon=heroIconFor(h.name,h.advClass);
     recomputeGearStats(h);
     h.hp=Math.min(h.hp||heroMaxHp(h),heroMaxHp(h));
     h.alive=h.hp>0;
