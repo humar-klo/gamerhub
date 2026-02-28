@@ -658,6 +658,8 @@ function endWave(){
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
+$('statsBtn').onclick=()=>{ drawTotalStats(); $('totalStatsModal').classList.remove('hidden'); };
+$('closeStatsBtn').onclick=()=>{ $('totalStatsModal').classList.add('hidden'); };
 $('modeBtn').onclick=()=>{ 
   state.mode=state.mode==='push'?'grind':'push';
   if(!state.running){ state.enemies=[]; state.bossPending=false; }

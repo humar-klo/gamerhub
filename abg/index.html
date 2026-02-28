@@ -27,6 +27,7 @@
       <button id="startBtn">Start Run</button>
       <button id="pauseBtn">Pause</button>
       <button id="speedBtn">Speed</button>
+      <button id="statsBtn">Total Stats</button>
       <button id="resetBtn" class="danger">Reset</button>
     </section>
 
@@ -84,10 +85,6 @@
         <div id="battleStats" class="set-summary"></div>
       </div>
       <div class="panel">
-        <h2>Total Stats</h2>
-        <div id="totalStats" class="set-summary"></div>
-      </div>
-      <div class="panel">
         <h2>Equipment</h2>
         <div id="equipHeroList" class="hero-pills"></div>
         <div id="setSummary" class="set-summary"></div>
@@ -128,6 +125,14 @@
       <p>Choose a new hero to join your party.</p>
       <div id="heroUnlockChoices" class="mini-actions"></div>
       <button id="heroUnlockContinueBtn" disabled>Continue Run</button>
+    </div>
+  </div>
+
+  <div id="totalStatsModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Total Stats</h2>
+      <div id="totalStats" class="set-summary"></div>
+      <button id="closeStatsBtn">Close</button>
     </div>
   </div>
 
