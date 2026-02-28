@@ -19,7 +19,7 @@ input,select{background:#0b1020;color:#e8edff;border:1px solid #2a355f;padding:8
 .party-actions{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 .party-actions::-webkit-scrollbar{display:none}
 .party-actions button{white-space:nowrap;flex:0 0 auto}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.grid{display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-top:12px}
 .panel{background:#11172a;border:1px solid #2a355f;border-radius:10px;padding:10px}
 .forest{position:relative;overflow:hidden;background:#0f1d18 url('assets/forest-bg.svg') center/cover no-repeat}
 .forest::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,20,34,.18),rgba(0,0,0,.35));pointer-events:none}
