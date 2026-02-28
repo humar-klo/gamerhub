@@ -295,7 +295,7 @@ function drawUpgradeUI(){
     const next=heroUpCost(h,key);
     const el=$(id);
     if(preview.buys<=0){
-      el.innerHTML=`${label} <span class='cost-bad'>(${next}g)</span>`;
+      el.textContent=`${label} (${next}g)`;
       el.disabled=true;
     }else{
       el.textContent=`${label} x${preview.buys} (${preview.total}g)`;

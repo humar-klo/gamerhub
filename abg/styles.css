@@ -8,7 +8,6 @@ h1{margin:.2rem 0}
 button{background:#5d6dff;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
 button:hover{opacity:.92}
 button:disabled{opacity:.45;cursor:not-allowed}
-button .cost-bad{color:#ff8f9d;font-weight:700}
 button.danger{background:#a6425c}
 .buyamt{padding:5px 8px;font-size:.8rem;background:#3f4cbc}
 .buyamt.active{background:#6a7eff}
