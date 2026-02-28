@@ -16,6 +16,7 @@ const state={
   unlockedSlots:1,
   nextHeroUnlockWave:50,
   pendingHeroUnlock:false,
+  heroUnlockChosen:false,
   enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1,statsView:'total',autoSkillCast:true
 };
 
@@ -67,13 +68,14 @@ function openHeroUnlockChoice(){
   const choices=pool.filter(c=>!owned.has(c));
   const wrap=$('heroUnlockChoices');
   state.pendingHeroUnlock=true;
+  state.heroUnlockChosen=false;
   wrap.innerHTML=choices.map(c=>`<button data-unlock-hero='${c}'>${c}</button>`).join('');
   $('heroUnlockContinueBtn').disabled=true;
   $('heroUnlockModal').classList.remove('hidden');
 }
 
 function unlockHeroByChoice(heroClass){
-  if(state.unlockedSlots>=3) return;
+  if(state.unlockedSlots>=3 || state.heroUnlockChosen) return;
   const newHero=heroTemplate(heroClass);
   const beforeCount=state.party.length;
   if(beforeCount===1){
@@ -87,6 +89,8 @@ function unlockHeroByChoice(heroClass){
   state.unlockedSlots=state.party.length;
   state.nextHeroUnlockWave=state.unlockedSlots===2?100:null;
   state.pendingHeroUnlock=false;
+  state.heroUnlockChosen=true;
+  $('heroUnlockChoices').querySelectorAll('button').forEach(b=>b.disabled=true);
   $('heroUnlockContinueBtn').disabled=false;
   log(`🧭 Reinforcement joined: ${heroClass} at Lv ${newHero.lvl}! Party slots: ${state.unlockedSlots}/3`);
   save();
@@ -442,7 +446,8 @@ function drawStatsPanel(){
 function drawDebugBadge(){
   const now=Date.now();
   const sinceStep=state.runtime?.lastStepTs?Math.max(0,Math.round((now-state.runtime.lastStepTs)/1000)):'—';
-  const status=state.running?(state.paused?'paused':'running'):'idle';
+  const waitingUnlock=!$('heroUnlockModal').classList.contains('hidden');
+  const status=waitingUnlock?'awaiting hero pick':(state.running?(state.paused?'paused':'running'):'idle');
   $('debugBadge').innerHTML=`state: <b>${status}</b><br>since step: <b>${sinceStep}s</b> • loop resets: <b>${state.runtime?.loopResets||0}</b>`;
 }
 
@@ -1091,6 +1096,7 @@ function normalizeLoadedState(){
   if(state.partyTalentPts==null) state.partyTalentPts=0;
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
+  if(state.heroUnlockChosen==null) state.heroUnlockChosen=false;
   if(state.upgradeHeroIdx==null) state.upgradeHeroIdx=0;
   if(state.autoSkillCast==null) state.autoSkillCast=true;
   if(!state.statsView) state.statsView='total';
@@ -1116,6 +1122,7 @@ function startNewGame(playerName,startClass){
   state.unlockedSlots=1;
   state.nextHeroUnlockWave=50;
   state.pendingHeroUnlock=false;
+  state.heroUnlockChosen=false;
   state.upgradeHeroIdx=0;
   state.statsView='total';
   state.autoSkillCast=true;
