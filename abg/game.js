@@ -361,8 +361,10 @@ function enemyAttack(c,d){
   }
 }
 function step(){
-  // Defensive cleanup: if a stale enemy object lingers (dead/invalid), normalize before resolving actions.
+  // Defensive cleanup: normalize stale/inconsistent entity states before resolving actions.
   state.enemies = state.enemies.filter(x => x && Number.isFinite(x.hp));
+  state.enemies.forEach(x=>{ if(x.hp<=0) x.alive=false; });
+  state.party.forEach(x=>{ if(x.hp<=0) x.alive=false; });
   const p=alive(state.party), e=alive(state.enemies);
   if(!p.length||!e.length) return endWave();
 
