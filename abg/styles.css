@@ -8,6 +8,9 @@ button{background:#5d6dff;color:#fff;border:0;padding:8px 12px;border-radius:8px
 button:hover{opacity:.92}
 button:disabled{opacity:.45;cursor:not-allowed}
 button.danger{background:#a6425c}
+.buyamt{padding:5px 8px;font-size:.8rem;background:#3f4cbc}
+.buyamt.active{background:#6a7eff}
+input,select{background:#0b1020;color:#e8edff;border:1px solid #2a355f;padding:8px;border-radius:8px}
 .mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .mini-actions button{padding:6px 9px;font-size:.85rem;background:#4b5ae0}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
@@ -76,5 +79,12 @@ button.danger{background:#a6425c}
 .pdoll::before{content:'';position:absolute;width:54px;height:54px;top:18px;border-radius:50%;background:rgba(221,232,255,.2);border:1px solid rgba(161,181,236,.35)}
 .pdoll::after{content:'';position:absolute;width:88px;height:120px;top:74px;border-radius:50px 50px 30px 30px;background:rgba(178,202,255,.14);border:1px solid rgba(150,175,235,.3)}
 .pdoll-label{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:.78rem;opacity:.85}
+
+.modal{position:fixed;inset:0;background:rgba(3,6,12,.72);display:grid;place-items:center;z-index:30}
+.modal.hidden{display:none}
+.modal-card{width:min(420px,92vw);background:#11172a;border:1px solid #2a355f;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.modal-card h2{margin:0}
+.modal-card p{margin:0;opacity:.9;font-size:.9rem}
+.modal-card label{display:flex;flex-direction:column;gap:6px;font-size:.88rem}
 
 @media(max-width:800px){.grid{grid-template-columns:1fr}.battlefield{grid-template-columns:1fr;}.vs{display:none}.equip-body{grid-template-columns:1fr 1fr;grid-template-areas:'shoulders amulet' 'helm helm' 'weapon offhand' 'gloves ring1' 'chest chest' 'belt boots' 'paperdoll ring2';}.pdoll{min-height:140px}}

@@ -47,20 +47,32 @@
       </div>
       <div class="panel">
         <h2>Camp Shop</h2>
+        <div class="mini-actions">
+          <span>Buy amount:</span>
+          <button id="buyAmt1" class="buyamt active">x1</button>
+          <button id="buyAmt5" class="buyamt">x5</button>
+          <button id="buyAmt10" class="buyamt">x10</button>
+          <button id="buyAmtMAX" class="buyamt">MAX</button>
+        </div>
         <button id="healBtn">Heal Party (8g)</button>
         <button id="reviveBtn">Revive KO Ally (14g)</button>
         <div id="reviveTargets" class="mini-actions"></div>
         <button id="atkBtn">+2 Team ATK (16g)</button>
         <button id="hpBtn">+10 Team Max HP (16g)</button>
+        <button id="critBtn">+1% Team Crit (20g)</button>
+        <button id="critDmgBtn">+5% Team Crit Dmg (24g)</button>
+        <button id="defBtn">+1 Team Defense (18g)</button>
       </div>
       <div class="panel">
         <h2>Talents (<span id="talentPts">0</span>)</h2>
-        <button id="talSecondWind" title="Once per wave, each hero survives a lethal hit and returns at 30% HP.">Second Wind (1 pt)</button>
-        <button id="talBloodlust" title="Each kill in a wave grants stacking +1 team ATK (up to +10) until wave ends.">Bloodlust (1 pt)</button>
-        <button id="talEcho" title="15% chance for attacks to trigger an extra echo hit for 40% damage.">Arcane Echo (1 pt)</button>
-        <button id="talTreasure" title="Increases gold from kills and boosts item drop chance.">Treasure Hunter (1 pt)</button>
-        <button id="talRhythm" title="Kills reduce all living allies' active skill cooldown by 1.">Battle Rhythm (1 pt)</button>
-        <button id="talSlayer" title="Deal extra damage to bosses and elite enemies.">Giant Slayer (1 pt)</button>
+        <button id="talSecondWind" title="Once per wave, each hero survives a lethal hit and returns at 30% HP.">Second Wind (5 pt)</button>
+        <button id="talBloodlust" title="Each kill in a wave grants stacking +1 team ATK (up to +10) until wave ends.">Bloodlust (5 pt)</button>
+        <button id="talEcho" title="15% chance for attacks to trigger an extra echo hit for 40% damage.">Arcane Echo (5 pt)</button>
+        <button id="talTreasure" title="Increases gold from kills and boosts item drop chance.">Treasure Hunter (5 pt)</button>
+        <button id="talRhythm" title="Kills reduce all living allies' active skill cooldown by 1.">Battle Rhythm (5 pt)</button>
+        <button id="talSlayer" title="Deal extra damage to bosses and elite enemies.">Giant Slayer (5 pt)</button>
+        <button id="talAtkPct" title="Stacks permanent team attack bonus in tiers.">Might Training (+5/10/15/20/25%)</button>
+        <button id="talHpPct" title="Stacks permanent team max HP bonus in tiers.">Fortitude Training (+5/10/15/20/25%)</button>
       </div>
       <div class="panel">
         <h2>Commands</h2>
@@ -86,6 +98,25 @@
       </div>
     </section>
   </main>
+
+  <div id="newGameModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>New Game</h2>
+      <p>Pick your first hero and enter a name. Extra hero slots unlock at Wave 20 and Wave 50.</p>
+      <label>Player name
+        <input id="playerNameInput" maxlength="20" placeholder="Your name" />
+      </label>
+      <label>Starting class
+        <select id="startClassSelect">
+          <option value="Warrior">Warrior</option>
+          <option value="Ranger">Ranger</option>
+          <option value="Mage">Mage</option>
+        </select>
+      </label>
+      <button id="startNewGameBtn">Start Adventure</button>
+    </div>
+  </div>
+
   <script src="game.js"></script>
 </body>
 </html>
