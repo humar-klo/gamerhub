@@ -206,7 +206,7 @@ function drawList(id,arr,isParty=true){
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
         ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Focus ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
-      ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='Use ${skillName(u)} (Empowered at 50 Focus)'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
+      ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
     </div>`).join('');
 }
@@ -253,6 +253,17 @@ function skillName(h){
   if(h.name==='Warrior') return 'Guardian Cry';
   if(h.name==='Ranger') return 'Volley';
   return 'Arcane Nova';
+}
+function skillTooltip(h){
+  if(h.advClass==='Paladin') return 'Guardian Oath: Team shield + team heal (5, empowered 8). CD 8. Empowered at 50 focus.';
+  if(h.advClass==='Berserker') return 'Rage Slam: Team shield + single heavy strike (125% ATK). CD 8. Empowered at 50 focus.';
+  if(h.advClass==='Sniper') return 'Deadeye Volley: Hits all enemies, applies mark amp 32% (+8% with Pinpoint). CD 8.';
+  if(h.advClass==='Warden') return 'Thorn Volley: Hits all enemies, applies marks, grants team shield (3, empowered 5). CD 8.';
+  if(h.advClass==='Sorcerer') return 'Tempest Nova: Main hit + chain splash (1/2 extra targets). CD 8. Skill scaling boosted by Overcharge.';
+  if(h.advClass==='Warlock') return 'Soul Drain: Heavy single-target spell, self-heal 10 (empowered 16). CD 8.';
+  if(h.name==='Warrior') return 'Guardian Cry: Team shield skill. CD 8. Empowered at 50 focus.';
+  if(h.name==='Ranger') return 'Volley: Multi-target ranged strike with mark setup. CD 8.';
+  return 'Arcane Nova: Spell burst attack. CD 8.';
 }
 function slotText(it){
   return it?`${it.name} (+${it.atk} ATK / +${it.hp} HP${it.crit?` / +${Math.round(it.crit*100)}% crit`:''})`:'— empty —';
@@ -584,7 +595,7 @@ function advancedOptions(name){
 }
 function advTalentNames(cls){
   const m={
-    Paladin:['Bulwark (+1 def)','Zeal (+10% atk)','Beacon (+2 self-heal/hit)'],
+    Paladin:['Bulwark (+1 def)','Zeal (+8% atk)','Beacon (+2 self-heal/hit)'],
     Berserker:['Ruin (+12% low-hp atk)','Executioner (+10% vs elites/boss)','Bloodguard (+4% leech)'],
     Sniper:['Sharpshot (+6% crit)','Headhunter (+15% crit dmg)','Pinpoint (+8% marked dmg)'],
     Warden:['Ironhide (+12% hp)','Aegis (+1 def)','Safeguard (stronger 2nd wind)'],
@@ -592,6 +603,22 @@ function advTalentNames(cls){
     Warlock:['Soul Siphon (+6% leech)','Doom (+10% vs elites/boss)','Dark Pact (+8% atk)']
   };
   return m[cls]||['—','—','—'];
+}
+function talentMeta(key){
+  const m={
+    secondWind:{name:'Second Wind',short:'Survive one lethal hit each wave.',detail:'Once per wave, this hero survives a lethal hit and returns at 30% max HP (45% for Warden with Safeguard).'},
+    bloodlust:{name:'Bloodlust',short:'+1 stacking wave ATK on this hero kills.',detail:'When this hero gets a kill, team gains +1 wave ATK stack (max +10) until wave ends.'},
+    echo:{name:'Arcane Echo',short:'Chance to trigger bonus echo hit.',detail:'Gives 15% chance for an extra hit dealing 40% damage. Sorcerer Chainspark adds +10% echo chance.'},
+    treasure:{name:'Treasure Hunter',short:'More gold and better loot odds.',detail:'Kills by this hero grant +50% gold. Also contributes to higher item drop chance if any party hero owns Treasure Hunter.'},
+    battleRhythm:{name:'Battle Rhythm',short:'Kills reduce team skill cooldowns.',detail:'On this hero kill, all living allies reduce active skill cooldown by 1 turn.'},
+    giantSlayer:{name:'Giant Slayer',short:'Bonus damage vs elites and bosses.',detail:'This hero deals +18% damage vs elite and boss enemies.'},
+    atkPctLv:{name:'Might Training',short:'Permanent attack scaling.',detail:'+5/+10/+15/+20/+25% ATK across ranks 1-5 for this hero.'},
+    hpPctLv:{name:'Fortitude Training',short:'Permanent max HP scaling.',detail:'+5/+10/+15/+20/+25% Max HP across ranks 1-5 for this hero.'},
+    adv1:{name:'Class Node I',short:'Class-specific passive #1.',detail:'First advanced-class passive node. Exact effect depends on chosen class.'},
+    adv2:{name:'Class Node II',short:'Class-specific passive #2.',detail:'Second advanced-class passive node. Exact effect depends on chosen class.'},
+    adv3:{name:'Class Node III',short:'Class-specific passive #3.',detail:'Third advanced-class passive node. Exact effect depends on chosen class.'}
+  };
+  return m[key]||{name:key,short:'',detail:''};
 }
 
 function itemScore(it){ return it.atk*2 + it.hp*0.25 + (it.crit||0)*120 + (it.set?2:0); }
@@ -744,19 +771,31 @@ function renderTalentModal(){
   const h=state.party[state.talentHeroIdx]; if(!h) return;
   $('talentHeroTitle').textContent=`${h.name} Talent Tree`;
   $('talentHeroPts').innerHTML=`<div class='stat-row'><span>Talent points</span><span>${h.talentPts||0}</span></div><div class='stat-row'><span>Class</span><span>${h.advClass||'Base'}</span></div>`;
-  const baseButtons=[
-    ['secondWind','Second Wind'],['bloodlust','Bloodlust'],['echo','Arcane Echo'],['treasure','Treasure Hunter'],['battleRhythm','Battle Rhythm'],['giantSlayer','Giant Slayer']
-  ].map(([k,label])=>`<button data-btal='${k}' ${h.talents[k]?'disabled':''}>${label} (${h.talents[k]?'owned':'5 pt'})</button>`).join('');
+  const baseKeys=['secondWind','bloodlust','echo','treasure','battleRhythm','giantSlayer'];
+  const baseButtons=baseKeys.map((k)=>{
+    const meta=talentMeta(k);
+    const owned=!!h.talents[k];
+    return `<button data-btal='${k}' ${owned?'disabled':''} title='${meta.detail}'><b>${meta.name} (${owned?'owned':'5 pt'})</b><br><small>${meta.short}</small></button>`;
+  }).join('');
   const atkRank=h.talents.atkPctLv||0, hpRank=h.talents.hpPctLv||0;
+  const atkMeta=talentMeta('atkPctLv'), hpMeta=talentMeta('hpPctLv');
   $('baseTalentButtons').innerHTML=baseButtons +
-    `<button data-btal='atkPctLv' ${atkRank>=5?'disabled':''}>Might Training [${atkRank}/5] (5 pt)</button>`+
-    `<button data-btal='hpPctLv' ${hpRank>=5?'disabled':''}>Fortitude Training [${hpRank}/5] (5 pt)</button>`;
+    `<button data-btal='atkPctLv' ${atkRank>=5?'disabled':''} title='${atkMeta.detail}'><b>${atkMeta.name} [${atkRank}/5] (${atkRank>=5?'max':'5 pt'})</b><br><small>${atkMeta.short}</small></button>`+
+    `<button data-btal='hpPctLv' ${hpRank>=5?'disabled':''} title='${hpMeta.detail}'><b>${hpMeta.name} [${hpRank}/5] (${hpRank>=5?'max':'5 pt'})</b><br><small>${hpMeta.short}</small></button>`;
   const [a,b]=advancedOptions(h.name);
   const preview=(cls)=>`<b>${cls}</b> — Skill: ${skillName({...h,advClass:cls})}<br>${advTalentNames(cls).join(' • ')}`;
   $('advPreview').innerHTML=`You can inspect before choosing:<br>${preview(a)}<br><br>${preview(b)}`;
   if(!h.advClass){ $('advTalentButtons').innerHTML=`<small>Choose advanced class in Party panel at Lv 10+ to unlock class tree.</small>`; return; }
   const names=advTalentNames(h.advClass);
-  $('advTalentButtons').innerHTML=[0,1,2].map(i=>`<button data-atal='adv${i+1}' ${(h.talents[`adv${i+1}`])?'disabled':''}>${names[i]} (${h.talents[`adv${i+1}`]?'owned':'5 pt'})</button>`).join('');
+  $('advTalentButtons').innerHTML=[0,1,2].map(i=>{
+    const key=`adv${i+1}`;
+    const owned=!!h.talents[key];
+    const line=names[i];
+    const parts=line.split('(');
+    const title=parts[0].trim();
+    const short=(parts[1]?parts[1].replace(')',''):'Class passive').trim();
+    return `<button data-atal='${key}' ${owned?'disabled':''} title='${line}'><b>${title} (${owned?'owned':'5 pt'})</b><br><small>${short}</small></button>`;
+  }).join('');
 }
 function buyHeroTalent(hero,key){
   if((hero.talentPts||0)<TALENT_COST) return;
