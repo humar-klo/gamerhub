@@ -8,6 +8,7 @@ const state={
   partyTalentPts:0,
   partyTalents:{treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0},
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
+  runtime:{lastStepTs:0,loopResets:0},
   watchdog:{noChangeTicks:0,lastTotalHp:0},
   waveAtkStack:0,
   playerName:'Commander',
@@ -438,6 +439,13 @@ function drawStatsPanel(){
   $('totalStats').innerHTML=rows.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
 }
 
+function drawDebugBadge(){
+  const now=Date.now();
+  const sinceStep=state.runtime?.lastStepTs?Math.max(0,Math.round((now-state.runtime.lastStepTs)/1000)):'—';
+  const status=state.running?(state.paused?'paused':'running'):'idle';
+  $('debugBadge').innerHTML=`state: <b>${status}</b><br>since step: <b>${sinceStep}s</b> • loop resets: <b>${state.runtime?.loopResets||0}</b>`;
+}
+
 function draw(){
   $('wave').textContent=state.wave; $('highestWave').textContent=state.highestWave; $('gold').textContent=state.gold; $('wins').textContent=state.wins;
   $('speedLabel').textContent=`${state.speed}x`;
@@ -449,7 +457,7 @@ function draw(){
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
-  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawStatsPanel();
+  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawStatsPanel(); drawDebugBadge();
 }
 
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
@@ -640,6 +648,7 @@ function enemyAttack(c,d){
 }
 function step(){
   // Defensive cleanup: normalize stale/inconsistent entity states before resolving actions.
+  state.runtime.lastStepTs=Date.now();
   state.targetSwapTick=(state.targetSwapTick||0)+1;
   state.enemies = state.enemies.filter(x => x && Number.isFinite(x.hp));
   state.enemies.forEach(x=>{ if(x.hp<=0) x.alive=false; });
@@ -899,6 +908,7 @@ function buyBulk(costFn,apply){
 
 function keepCombatAlive(){
   if(state.running && !state.paused){
+    state.runtime.loopResets=(state.runtime.loopResets||0)+1;
     loop();
   }
 }
@@ -1079,6 +1089,7 @@ function normalizeLoadedState(){
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
   state.wave=Math.max(1,state.wave||1);
   if(!state.stats) state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
+  if(!state.runtime) state.runtime={lastStepTs:0,loopResets:0};
   if(!state.watchdog) state.watchdog={noChangeTicks:0,lastTotalHp:0};
   state.stats.waveStartTs=state.stats.waveStartTs||Date.now();
   state.unlockedSlots=Math.max(1,Math.min(3,state.party.length||1));
@@ -1101,6 +1112,7 @@ function startNewGame(playerName,startClass){
   state.autoSkillCast=true;
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
+  state.runtime={lastStepTs:0,loopResets:0};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};
   save();
   draw();
