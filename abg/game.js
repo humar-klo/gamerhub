@@ -52,14 +52,14 @@ const comboMult=()=>1+Math.min(0.25,(state.combo||0)*0.0125);
 const fmtNum=n=>Math.round(n).toLocaleString();
 
 function pickEnemyTarget(){
-  const enemies=alive(state.enemies);
+  const enemies=state.enemies.filter(e=>e && e.alive && Number.isFinite(e.hp) && Number.isFinite(e.maxHp) && e.hp>0 && e.maxHp>0);
   if(!enemies.length) return null;
-  const marked=enemies.filter(e=>e.markedTurns>0);
+  const marked=enemies.filter(e=>(e.markedTurns||0)>0);
   if(marked.length) return marked.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp))[0];
   return enemies.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp))[0];
 }
 function pickHeroTarget(){
-  const heroes=alive(state.party);
+  const heroes=state.party.filter(h=>h && h.alive && Number.isFinite(h.hp) && h.hp>0);
   if(!heroes.length) return null;
   return heroes.sort((a,b)=>(a.hp/heroMaxHp(a))-(b.hp/heroMaxHp(b)))[0];
 }
@@ -494,7 +494,7 @@ function endWave(){
     state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*0.2)); h.cd=0; h.focus=Math.max(0,(h.focus||0)-20);});
     state.enemies=[]; save(); draw();
     if(state.autoMode){
-      if(state.mode==='grind') state.wave=Math.min(state.wave,state.highestWave||state.wave);
+      // In grind mode, stay on the currently selected wave (do not snap backward unexpectedly).
       spawnWave(state.wave);
       startWave();
     }
@@ -504,7 +504,8 @@ function endWave(){
     const penalty=state.wave*5; state.gold=Math.max(0,state.gold-penalty);
     // Hard switch to grind after wipe to prevent push-mode deadlocks on failed progression.
     state.mode='grind';
-    state.wave=Math.max(1,state.highestWave||state.wave||1);
+    // Keep player near current progression instead of hard snapping backward.
+    state.wave=Math.max(1,Math.min(state.wave||1,(state.highestWave||1)+1));
     state.combo=0;
     state.waveAtkStack=0;
     state.bossPending=false;
@@ -539,7 +540,7 @@ $('prevWaveBtn').onclick=()=>{
   state.wave=target; state.enemies=[]; state.bossPending=false; draw();
 };
 $('nextWaveBtn').onclick=()=>{
-  const target=Math.min(state.highestWave+1,state.wave+1);
+  const target=Math.max(1,state.wave+1);
   if(state.running){ log(`↪️ Jumping to Wave ${target}...`); jumpToWave(target); return; }
   state.wave=target; state.enemies=[]; state.bossPending=false; draw();
 };
@@ -584,7 +585,7 @@ if(state.talents.giantSlayer==null) state.talents.giantSlayer=false;
 if(!state.mode) state.mode='push';
 if(state.combo==null) state.combo=0;
 if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
-state.wave=Math.max(1,Math.min(state.wave,state.highestWave+1));
+state.wave=Math.max(1,state.wave||1);
 if(!state.stats) state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
 if(!state.watchdog) state.watchdog={noChangeTicks:0,lastTotalHp:0};
 state.stats.waveStartTs=state.stats.waveStartTs||Date.now();
