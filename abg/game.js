@@ -558,7 +558,12 @@ $('prevWaveBtn').onclick=()=>{
   state.wave=target; state.enemies=[]; state.bossPending=false; draw();
 };
 $('nextWaveBtn').onclick=()=>{
+  const maxUnlocked=Math.max(1,state.highestWave+1);
   const target=Math.max(1,state.wave+1);
+  if(target>maxUnlocked){
+    log(`🔒 Wave ${target} is locked. Clear wave ${target-1} at least once first.`);
+    return;
+  }
   if(state.running){ log(`↪️ Jumping to Wave ${target}...`); jumpToWave(target); return; }
   state.wave=target; state.enemies=[]; state.bossPending=false; draw();
 };
