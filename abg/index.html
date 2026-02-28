@@ -30,12 +30,26 @@
       <button id="resetBtn" class="danger">Reset</button>
     </section>
 
-    <section class="panel collapsible">
-      <div class="collapsible-head">
-        <h2>Total Stats</h2>
-        <button id="toggleTotalStatsBtn" class="buyamt">Hide</button>
+    <section class="upgrade-stats-row">
+      <div class="panel">
+        <h2>Hero Upgrades</h2>
+        <div id="upgradeHeroList" class="hero-pills"></div>
+        <div class="mini-actions">
+          <span>Buy amount:</span>
+          <button id="buyAmt1" class="buyamt active">x1</button>
+          <button id="buyAmt5" class="buyamt">x5</button>
+          <button id="buyAmt10" class="buyamt">x10</button>
+          <button id="buyAmtMAX" class="buyamt">MAX</button>
+        </div>
+        <div id="upgradeInfo" class="set-summary"></div>
+        <button id="upAtkBtn">+2 ATK</button>
+        <button id="upHpBtn">+12 Max HP</button>
+        <button id="upCritBtn">+1% Crit</button>
+        <button id="upCritDmgBtn">+5% Crit Dmg</button>
+        <button id="upDefBtn">+1 Defense</button>
       </div>
-      <div id="totalStatsWrap">
+      <div class="panel">
+        <h2>Total Stats</h2>
         <div id="totalStats" class="set-summary"></div>
       </div>
     </section>
@@ -54,25 +68,6 @@
       <div class="panel">
         <h2>Enemies</h2>
         <div id="enemies"></div>
-      </div>
-      <div class="panel">
-        <h2>Camp Shop</h2>
-        <div class="mini-actions">
-          <span>Buy amount:</span>
-          <button id="buyAmt1" class="buyamt active">x1</button>
-          <button id="buyAmt5" class="buyamt">x5</button>
-          <button id="buyAmt10" class="buyamt">x10</button>
-          <button id="buyAmtMAX" class="buyamt">MAX</button>
-        </div>
-        <button id="healBtn">Heal Party (8g)</button>
-        <button id="reviveBtn">Revive KO Ally (14g)</button>
-        <div id="reviveTargets" class="mini-actions"></div>
-        <button id="atkBtn">+2 Team ATK (16g)</button>
-        <button id="hpBtn">+10 Team Max HP (16g)</button>
-        <button id="critBtn">+1% Team Crit (20g)</button>
-        <button id="critDmgBtn">+5% Team Crit Dmg (24g)</button>
-        <button id="defBtn">+1 Team Defense (18g)</button>
-        <div id="shopBalanceInfo" class="set-summary"></div>
       </div>
       <div class="panel">
         <h2>Talents (<span id="talentPts">0</span>)</h2>

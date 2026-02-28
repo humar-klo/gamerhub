@@ -7,8 +7,6 @@ const state={
   talentPts:0,autoMode:true,mode:'push',combo:0,
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
   watchdog:{noChangeTicks:0,lastTotalHp:0},
-  shopHealLv:0,shopReviveLv:0,shopAtkLv:0,shopHpLv:0,shopCritLv:0,shopCritDmgLv:0,shopDefLv:0,
-  teamBuffAtk:0,teamBuffHp:0,teamBuffCrit:0,teamBuffCritDmg:0,teamBuffDef:0,
   talents:{secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0},
   waveAtkStack:0,
   playerName:'Commander',
@@ -16,12 +14,12 @@ const state={
   unlockedSlots:1,
   nextHeroUnlockWave:20,
   pendingHeroUnlock:false,
-  enemies:[],equipHeroIdx:0,shopBuyAmount:1,showTotalStats:true
+  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,shopBuyAmount:1
 };
 
 function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
-  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0};
+  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0};
 }
 
 function setHeroLevel(hero,targetLevel){
@@ -136,20 +134,18 @@ function log(t){$('log').innerHTML=`<div>${t}</div>`+$('log').innerHTML}
 function lootLog(t,cls=''){ $('loot').innerHTML=`<div class='${cls}'>${t}</div>`+$('loot').innerHTML }
 
 const costByLevel=(base,step,lv)=>base+lv*step;
-const healCost=()=>costByLevel(8,4,state.shopHealLv);
-const reviveCost=()=>costByLevel(14,6,state.shopReviveLv);
-const atkCost=()=>costByLevel(16,9,state.shopAtkLv);
-const hpCost=()=>costByLevel(16,9,state.shopHpLv);
-const critCost=()=>costByLevel(20,10,state.shopCritLv);
-const critDmgCost=()=>costByLevel(24,12,state.shopCritDmgLv);
-const defCost=()=>costByLevel(18,10,state.shopDefLv);
+const heroUpCost=(h,key)=>{
+  const defs={upAtkLv:[14,9],upHpLv:[14,9],upCritLv:[18,11],upCritDmgLv:[20,12],upDefLv:[16,10]};
+  const [base,step]=defs[key];
+  return costByLevel(base,step,h[key]||0);
+};
 const TALENT_COST=5;
 const TALENT_PCT_TIERS=[5,10,15,20,25];
 
 function xpToNext(h){ return 20 + (h.lvl-1)*12; }
-function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + state.teamBuffCrit + (h.advClass==='Sniper'?0.12:0) + h.focus*0.001; }
+function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + (h.upCrit||0) + (h.advClass==='Sniper'?0.12:0) + h.focus*0.001; }
 function heroAtk(h){
-  let v=h.atk+state.teamBuffAtk+h.gearAtk+h.setAtk+state.waveAtkStack;
+  let v=h.atk+(h.upAtk||0)+h.gearAtk+h.setAtk+state.waveAtkStack;
   const atkPct=TALENT_PCT_TIERS.slice(0,state.talents.atkPctLv||0).reduce((s,x)=>s+x,0)/100;
   v=Math.floor(v*(1+atkPct));
   if(h.advClass==='Berserker' && h.hp/heroMaxHp(h)<0.45) v+=Math.ceil(v*0.22);
@@ -158,7 +154,7 @@ function heroAtk(h){
   return v;
 }
 function heroMaxHp(h){
-  let v=h.maxHp+state.teamBuffHp+h.gearHp+h.setHp;
+  let v=h.maxHp+(h.upHp||0)+h.gearHp+h.setHp;
   const hpPct=TALENT_PCT_TIERS.slice(0,state.talents.hpPctLv||0).reduce((s,x)=>s+x,0)/100;
   v=Math.floor(v*(1+hpPct));
   if(h.advClass==='Paladin') v+=16;
@@ -212,9 +208,23 @@ function drawBattlefield(){
   $('partyLane').innerHTML=state.party.map((u,i)=>`<div class='sprite ${u.alive?'':'dead'}' id='p${i}'><img src='${u.icon}' alt=''></div>`).join('');
   $('enemyLane').innerHTML=state.enemies.map((u,i)=>`<div class='sprite enemy ${u.alive?'':'dead'}' id='e${i}'><img src='${u.icon}' alt=''></div>`).join('');
 }
-function drawReviveTargets(){
-  const fallen=state.party.map((h,i)=>({h,i})).filter(x=>!x.h.alive||x.h.hp<=0);
-  $('reviveTargets').innerHTML=fallen.map(x=>`<button data-revive='${x.i}'>Revive ${x.h.name}</button>`).join('');
+function drawUpgradeUI(){
+  $('upgradeHeroList').innerHTML=state.party.map((h,i)=>`<button class='hero-pill ${i===state.upgradeHeroIdx?'active':''}' data-uphero='${i}'>${h.name} Lv${h.lvl}</button>`).join('');
+  const h=state.party[state.upgradeHeroIdx]||state.party[0];
+  if(!h) return;
+  $('upgradeInfo').innerHTML=[
+    [`Target`,`${h.name} Lv${h.lvl}`],
+    ['ATK rank',`${h.upAtkLv||0}`],
+    ['HP rank',`${h.upHpLv||0}`],
+    ['Crit rank',`${h.upCritLv||0}`],
+    ['CritDmg rank',`${h.upCritDmgLv||0}`],
+    ['Def rank',`${h.upDefLv||0}`]
+  ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
+  $('upAtkBtn').textContent=`+2 ATK (${heroUpCost(h,'upAtkLv')}g)`;
+  $('upHpBtn').textContent=`+12 Max HP (${heroUpCost(h,'upHpLv')}g)`;
+  $('upCritBtn').textContent=`+1% Crit (${heroUpCost(h,'upCritLv')}g)`;
+  $('upCritDmgBtn').textContent=`+5% Crit Dmg (${heroUpCost(h,'upCritDmgLv')}g)`;
+  $('upDefBtn').textContent=`+1 Defense (${heroUpCost(h,'upDefLv')}g)`;
 }
 function drawClassChoices(){
   state.party.forEach((h,i)=>{
@@ -300,6 +310,8 @@ function drawTotalStats(){
   const totalMaxHp=state.party.reduce((s,h)=>s+heroMaxHp(h),0);
   const totalCrit=state.party.reduce((s,h)=>s+heroCrit(h),0);
   const avgCrit=state.party.length?totalCrit/state.party.length:0;
+  const totalDef=state.party.reduce((s,h)=>s+(h.upDef||0),0);
+  const avgCritDmg=state.party.length?state.party.reduce((s,h)=>s+(h.upCritDmg||0),0)/state.party.length:0;
   $('totalStats').innerHTML=[
     ['Party size', `${state.party.length}/3`],
     ['Total party level', fmtNum(partyLvTotal)],
@@ -307,8 +319,8 @@ function drawTotalStats(){
     ['Combined ATK', fmtNum(totalAtk)],
     ['Combined Max HP', fmtNum(totalMaxHp)],
     ['Average Crit', `${(avgCrit*100).toFixed(1)}%`],
-    ['Team Defense', fmtNum(state.teamBuffDef||0)],
-    ['Team Crit Dmg Bonus', `${Math.round((state.teamBuffCritDmg||0)*100)}%`]
+    ['Total Defense', fmtNum(totalDef)],
+    ['Avg Crit Dmg Bonus', `${Math.round(avgCritDmg*100)}%`]
   ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
 }
 
@@ -320,21 +332,11 @@ function draw(){
   $('vsLabel').textContent=state.wave%5===0?'BOSS':'AUTO';
   $('startBtn').textContent=state.running?'In Combat':'Start / Resume';
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
-  $('healBtn').textContent=`Heal Party (${healCost()}g)`;
-  $('reviveBtn').textContent=`Revive KO Ally (${reviveCost()}g)`;
-  $('atkBtn').textContent=`+2 Team ATK (${atkCost()}g)`;
-  $('hpBtn').textContent=`+10 Team Max HP (${hpCost()}g)`;
-  $('critBtn').textContent=`+1% Team Crit (${critCost()}g)`;
-  $('critDmgBtn').textContent=`+5% Team Crit Dmg (${critDmgCost()}g)`;
-  $('defBtn').textContent=`+1 Team Defense (${defCost()}g)`;
   $('talAtkPct').textContent=`Might Training (+5/10/15/20/25%) [${state.talents.atkPctLv||0}/5] (5 pt)`;
   $('talHpPct').textContent=`Fortitude Training (+5/10/15/20/25%) [${state.talents.hpPctLv||0}/5] (5 pt)`;
-  $('shopBalanceInfo').innerHTML=`Shop scaling: Heal +4/lv • Revive +6/lv • ATK/HP +9/lv • Crit +10/lv • CritDmg +12/lv • Def +10/lv`;
-  $('toggleTotalStatsBtn').textContent=state.showTotalStats?'Hide':'Show';
-  $('totalStatsWrap').classList.toggle('hidden',!state.showTotalStats);
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
-  drawReviveTargets(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats(); drawTotalStats();
+  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats(); drawTotalStats();
 }
 
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
@@ -441,7 +443,7 @@ function heroAttack(a,b){
   let dmg=heroAtk(a);
   const critChance=heroCrit(a);
   if(Math.random()<critChance){
-    const critMult=(a.advClass==='Sniper'?2.1:1.75)*(1+state.teamBuffCritDmg);
+    const critMult=(a.advClass==='Sniper'?2.1:1.75)*(1+(a.upCritDmg||0));
     dmg=Math.floor(dmg*critMult);
     log(`💥 ${a.name} crit!`); vfxAt(`e${state.enemies.indexOf(b)}`,'crit');
   }
@@ -477,7 +479,7 @@ function enemyAttack(c,d){
     const absorbed=Math.min(dmg,d.tempShield); d.tempShield-=absorbed; dmg-=absorbed;
     if(absorbed>0) vfxAt(`p${state.party.indexOf(d)}`,'block');
   }
-  dmg=Math.max(1,dmg-(d.setArmor||0)-state.teamBuffDef);
+  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0));
   if(dmg>0){
     const final=Math.max(1,dmg);
     d.hp-=final;
@@ -660,7 +662,6 @@ function endWave(){
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
-$('toggleTotalStatsBtn').onclick=()=>{ state.showTotalStats=!state.showTotalStats; draw(); save(); };
 $('modeBtn').onclick=()=>{ 
   state.mode=state.mode==='push'?'grind':'push';
   if(!state.running){ state.enemies=[]; state.bossPending=false; }
@@ -693,24 +694,19 @@ function buyBulk(costFn,apply){
     const c=costFn();
     if(state.gold<c) break;
     state.gold-=c;
-    apply(c);
+    apply();
     buys++;
   }
   return buys;
 }
 
-$('healBtn').onclick=()=>{
-  const buys=buyBulk(healCost,()=>{ state.shopHealLv++; state.party.forEach(h=>{if(h.alive)h.hp=Math.min(heroMaxHp(h),h.hp+28)}); });
-  if(!buys) return;
-  log(`Party healed (${buys}x).`); save(); draw();
-};
-$('reviveBtn').onclick=()=>{ const anyKo=state.party.some(h=>!h.alive||h.hp<=0); if(!anyKo){ log('No KO ally to revive.'); return; } log(`Choose a KO ally below Revive (${reviveCost()}g).`); draw(); };
-$('reviveTargets').onclick=(ev)=>{ const btn=ev.target.closest('button[data-revive]'); if(!btn) return; const c=reviveCost(); if(state.gold<c) return; const i=Number(btn.dataset.revive); const h=state.party[i]; if(!h||h.alive&&h.hp>0) return; state.gold-=c; state.shopReviveLv++; h.alive=true; h.cd=0; h.hp=Math.ceil(heroMaxHp(h)*0.45); log(`✨ Revived ${h.name} (-${c}g)`); save(); draw(); };
-$('atkBtn').onclick=()=>{ const buys=buyBulk(atkCost,()=>{ state.shopAtkLv++; state.teamBuffAtk+=2; }); if(!buys) return; log(`Team ATK +${buys*2}`); save(); draw(); };
-$('hpBtn').onclick=()=>{ const buys=buyBulk(hpCost,()=>{ state.shopHpLv++; state.teamBuffHp+=10; state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+10)); }); if(!buys) return; log(`Team Max HP +${buys*10}`); save(); draw(); };
-$('critBtn').onclick=()=>{ const buys=buyBulk(critCost,()=>{ state.shopCritLv++; state.teamBuffCrit+=0.01; }); if(!buys) return; log(`Team Crit +${buys}%`); save(); draw(); };
-$('critDmgBtn').onclick=()=>{ const buys=buyBulk(critDmgCost,()=>{ state.shopCritDmgLv++; state.teamBuffCritDmg+=0.05; }); if(!buys) return; log(`Team Crit Damage +${buys*5}%`); save(); draw(); };
-$('defBtn').onclick=()=>{ const buys=buyBulk(defCost,()=>{ state.shopDefLv++; state.teamBuffDef+=1; }); if(!buys) return; log(`Team Defense +${buys}`); save(); draw(); };
+function selectedUpgradeHero(){ return state.party[state.upgradeHeroIdx]||state.party[0]; }
+
+$('upAtkBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upAtkLv'),()=>{ h.upAtkLv=(h.upAtkLv||0)+1; h.upAtk=(h.upAtk||0)+2; }); if(!buys) return; log(`${h.name} ATK upgraded (${buys}x).`); save(); draw(); };
+$('upHpBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upHpLv'),()=>{ h.upHpLv=(h.upHpLv||0)+1; h.upHp=(h.upHp||0)+12; h.hp=Math.min(heroMaxHp(h),h.hp+12); }); if(!buys) return; log(`${h.name} Max HP upgraded (${buys}x).`); save(); draw(); };
+$('upCritBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upCritLv'),()=>{ h.upCritLv=(h.upCritLv||0)+1; h.upCrit=(h.upCrit||0)+0.01; }); if(!buys) return; log(`${h.name} Crit upgraded (${buys}x).`); save(); draw(); };
+$('upCritDmgBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upCritDmgLv'),()=>{ h.upCritDmgLv=(h.upCritDmgLv||0)+1; h.upCritDmg=(h.upCritDmg||0)+0.05; }); if(!buys) return; log(`${h.name} Crit Damage upgraded (${buys}x).`); save(); draw(); };
+$('upDefBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upDefLv'),()=>{ h.upDefLv=(h.upDefLv||0)+1; h.upDef=(h.upDef||0)+1; }); if(!buys) return; log(`${h.name} Defense upgraded (${buys}x).`); save(); draw(); };
 
 function buyTalent(key,label){ if(state.talentPts<TALENT_COST||state.talents[key]) return; state.talentPts-=TALENT_COST; state.talents[key]=true; log(`🧠 Talent unlocked: ${label}`); save(); draw(); }
 $('talSecondWind').onclick=()=>buyTalent('secondWind','Second Wind');
@@ -765,6 +761,7 @@ $('party').onclick=(ev)=>{
   h.advClass=btn.dataset.class; log(`⚔️ ${h.name} advanced to ${h.advClass}`); save(); draw();
 };
 $('equipHeroList').onclick=(ev)=>{ const b=ev.target.closest('button[data-ehero]'); if(!b) return; state.equipHeroIdx=Number(b.dataset.ehero); drawEquipUI(); };
+$('upgradeHeroList').onclick=(ev)=>{ const b=ev.target.closest('button[data-uphero]'); if(!b) return; state.upgradeHeroIdx=Number(b.dataset.uphero); drawUpgradeUI(); };
 $('skillBar').onclick=(ev)=>{ const b=ev.target.closest('button[data-skill]'); if(!b) return; castHeroSkill(Number(b.dataset.skill)); save(); };
 
 function normalizeLoadedState(){
@@ -774,6 +771,8 @@ function normalizeLoadedState(){
     if(h.secondWindUsed==null) h.secondWindUsed=false;
     if(h.abilityCd==null) h.abilityCd=0; if(h.tempShield==null) h.tempShield=0;
     if(h.focus==null) h.focus=0;
+    if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
+    if(h.upAtk==null) h.upAtk=0; if(h.upHp==null) h.upHp=0; if(h.upCrit==null) h.upCrit=0; if(h.upCritDmg==null) h.upCritDmg=0; if(h.upDef==null) h.upDef=0;
     recomputeGearStats(h);
     h.hp=Math.min(h.hp||heroMaxHp(h),heroMaxHp(h));
     h.alive=h.hp>0;
@@ -784,15 +783,9 @@ function normalizeLoadedState(){
   if(state.talents.giantSlayer==null) state.talents.giantSlayer=false;
   if(state.talents.atkPctLv==null) state.talents.atkPctLv=0;
   if(state.talents.hpPctLv==null) state.talents.hpPctLv=0;
-  if(state.shopCritLv==null) state.shopCritLv=0;
-  if(state.shopCritDmgLv==null) state.shopCritDmgLv=0;
-  if(state.shopDefLv==null) state.shopDefLv=0;
-  if(state.teamBuffCrit==null) state.teamBuffCrit=0;
-  if(state.teamBuffCritDmg==null) state.teamBuffCritDmg=0;
-  if(state.teamBuffDef==null) state.teamBuffDef=0;
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
-  if(state.showTotalStats==null) state.showTotalStats=true;
+  if(state.upgradeHeroIdx==null) state.upgradeHeroIdx=0;
   if(!state.mode) state.mode='push';
   if(state.combo==null) state.combo=0;
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
@@ -809,14 +802,12 @@ function startNewGame(playerName,startClass){
   state.playerName=(playerName||'Commander').trim()||'Commander';
   state.wave=1; state.highestWave=0; state.gold=0; state.wins=0; state.running=false; state.paused=false;
   state.talentPts=0; state.waveAtkStack=0; state.combo=0;
-  state.shopHealLv=0; state.shopReviveLv=0; state.shopAtkLv=0; state.shopHpLv=0; state.shopCritLv=0; state.shopCritDmgLv=0; state.shopDefLv=0;
-  state.teamBuffAtk=0; state.teamBuffHp=0; state.teamBuffCrit=0; state.teamBuffCritDmg=0; state.teamBuffDef=0;
   state.talents={secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0};
   state.party=[hero];
   state.unlockedSlots=1;
   state.nextHeroUnlockWave=20;
   state.pendingHeroUnlock=false;
-  state.showTotalStats=true;
+  state.upgradeHeroIdx=0;
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};
