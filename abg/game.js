@@ -20,7 +20,7 @@ const state={
 
 function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
-  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,mana:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
+  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,mana:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upManaLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upMana:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
 }
 
 function setHeroLevel(hero,targetLevel){
@@ -135,7 +135,7 @@ function lootLog(t,cls=''){ $('loot').innerHTML=`<div class='${cls}'>${t}</div>`
 
 const costByLevel=(base,step,lv)=>base+lv*step;
 const heroUpCost=(h,key)=>{
-  const defs={upAtkLv:[14,9],upHpLv:[14,9],upCritLv:[18,11],upCritDmgLv:[20,12],upDefLv:[16,10]};
+  const defs={upAtkLv:[14,9],upHpLv:[14,9],upManaLv:[15,9],upCritLv:[18,11],upCritDmgLv:[20,12],upDefLv:[16,10]};
   const [base,step]=defs[key];
   return costByLevel(base,step,h[key]||0);
 };
@@ -175,6 +175,7 @@ function heroMaxHp(h){
   if(h.talents?.adv1 && h.advClass==='Warden') v+=Math.ceil(v*0.12);
   return v;
 }
+function heroManaMax(h){ return 100 + (h.upMana||0); }
 function enemyArmor(e){ return Math.max(0,e.armor||0); }
 function dealDamageToEnemy(attacker,enemy,raw){
   let dmg=Math.max(1,Math.floor(raw));
@@ -216,7 +217,7 @@ function drawList(id,arr,isParty=true){
       <div>
         <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}${u.boss?' 👑':''}${u.advClass?` • ${u.advClass}`:''}${!isParty?` • ${u.type}`:''}</div>
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
-        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
+        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)}/${heroManaMax(u)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
       ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
@@ -231,7 +232,7 @@ function previewHeroBulkCost(hero,lvKey){
   const maxBuys=(target==='max')?9999:target;
   let gold=state.gold, buys=0, total=0;
   let lv=hero[lvKey]||0;
-  const defs={upAtkLv:[14,9],upHpLv:[14,9],upCritLv:[18,11],upCritDmgLv:[20,12],upDefLv:[16,10]};
+  const defs={upAtkLv:[14,9],upHpLv:[14,9],upManaLv:[15,9],upCritLv:[18,11],upCritDmgLv:[20,12],upDefLv:[16,10]};
   const [base,step]=defs[lvKey];
   for(let i=0;i<maxBuys;i++){
     const c=costByLevel(base,step,lv);
@@ -252,8 +253,9 @@ function drawUpgradeUI(){
     ['Hero',`${h.name} • Level: ${h.lvl}`],
     ['Total Max HP',`${heroMaxHp(h)}`],
     ['Total Defense',`${h.upDef||0}`],
-    ['Mana',`${Math.floor(h.mana||0)}/100`],
+    ['Mana',`${Math.floor(h.mana||0)}/${heroManaMax(h)}`],
     ['HP rank',`${h.upHpLv||0}`],
+    ['Mana rank',`${h.upManaLv||0}`],
     ['Def rank',`${h.upDefLv||0}`]
   ];
   const right=[
@@ -266,9 +268,10 @@ function drawUpgradeUI(){
     ['ATK/HP breakdown',`${h.atk}+${h.upAtk||0}+${h.gearAtk||0} / ${h.maxHp}+${h.upHp||0}+${h.gearHp||0}`]
   ];
   $('upgradeInfo').innerHTML=`<div class='upgrade-split'><div class='upgrade-col'>${left.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div><div class='upgrade-col'>${right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
-  const pAtk=previewHeroBulkCost(h,'upAtkLv'), pHp=previewHeroBulkCost(h,'upHpLv'), pCrit=previewHeroBulkCost(h,'upCritLv'), pCd=previewHeroBulkCost(h,'upCritDmgLv'), pDef=previewHeroBulkCost(h,'upDefLv');
+  const pAtk=previewHeroBulkCost(h,'upAtkLv'), pHp=previewHeroBulkCost(h,'upHpLv'), pMana=previewHeroBulkCost(h,'upManaLv'), pCrit=previewHeroBulkCost(h,'upCritLv'), pCd=previewHeroBulkCost(h,'upCritDmgLv'), pDef=previewHeroBulkCost(h,'upDefLv');
   $('upAtkBtn').textContent=`+2 ATK x${pAtk.buys} (${pAtk.total}g)`;
   $('upHpBtn').textContent=`+12 Max HP x${pHp.buys} (${pHp.total}g)`;
+  $('upManaBtn').textContent=`+10 Max Mana x${pMana.buys} (${pMana.total}g)`;
   $('upCritBtn').textContent=`+1% Crit x${pCrit.buys} (${pCrit.total}g)`;
   $('upCritDmgBtn').textContent=`+5% Crit Dmg x${pCd.buys} (${pCd.total}g)`;
   $('upDefBtn').textContent=`+1 Defense x${pDef.buys} (${pDef.total}g)`;
@@ -458,7 +461,7 @@ function markTarget(id){ const el=$(id); if(!el) return; el.classList.add('targe
 function bossWarn(id){ const el=$(id); if(!el) return; el.classList.add('boss-warn'); setTimeout(()=>el.classList.remove('boss-warn'),500); }
 function floatText(id,text){ const el=$(id); if(!el) return; const f=document.createElement('span'); f.className='float'; f.textContent=text; el.appendChild(f); setTimeout(()=>f.remove(),520); }
 function vfxAt(id,kind='slash'){ const el=$(id); if(!el) return; const fx=document.createElement('span'); fx.className=`fx ${kind}`; el.appendChild(fx); setTimeout(()=>fx.remove(),240); }
-function gainMana(h,amount){ h.mana=clamp((h.mana||0)+amount,0,100); }
+function gainMana(h,amount){ h.mana=clamp((h.mana||0)+amount,0,heroManaMax(h)); }
 
 function onEnemyKilled(enemy,killer){
   state.stats.waveKills=(state.stats.waveKills||0)+1;
@@ -816,6 +819,7 @@ function selectedUpgradeHero(){ return state.party[state.upgradeHeroIdx]||state.
 
 $('upAtkBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upAtkLv'),()=>{ h.upAtkLv=(h.upAtkLv||0)+1; h.upAtk=(h.upAtk||0)+2; }); if(!buys) return; log(`${h.name} ATK upgraded (${buys}x).`); save(); draw(); };
 $('upHpBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upHpLv'),()=>{ h.upHpLv=(h.upHpLv||0)+1; h.upHp=(h.upHp||0)+12; h.hp=Math.min(heroMaxHp(h),h.hp+12); }); if(!buys) return; log(`${h.name} Max HP upgraded (${buys}x).`); save(); draw(); };
+$('upManaBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upManaLv'),()=>{ h.upManaLv=(h.upManaLv||0)+1; h.upMana=(h.upMana||0)+10; h.mana=Math.min(heroManaMax(h),h.mana+10); }); if(!buys) return; log(`${h.name} Max Mana upgraded (${buys}x).`); save(); draw(); };
 $('upCritBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upCritLv'),()=>{ h.upCritLv=(h.upCritLv||0)+1; h.upCrit=(h.upCrit||0)+0.01; }); if(!buys) return; log(`${h.name} Crit upgraded (${buys}x).`); save(); draw(); };
 $('upCritDmgBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upCritDmgLv'),()=>{ h.upCritDmgLv=(h.upCritDmgLv||0)+1; h.upCritDmg=(h.upCritDmg||0)+0.05; }); if(!buys) return; log(`${h.name} Crit Damage upgraded (${buys}x).`); save(); draw(); };
 $('upDefBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upDefLv'),()=>{ h.upDefLv=(h.upDefLv||0)+1; h.upDef=(h.upDef||0)+1; }); if(!buys) return; log(`${h.name} Defense upgraded (${buys}x).`); save(); draw(); };
@@ -962,8 +966,8 @@ function normalizeLoadedState(){
     if(h.abilityCd==null) h.abilityCd=0; if(h.tempShield==null) h.tempShield=0;
     if(h.mana==null) h.mana=(h.focus==null?0:h.focus);
     if(h.focus!=null) delete h.focus;
-    if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
-    if(h.upAtk==null) h.upAtk=0; if(h.upHp==null) h.upHp=0; if(h.upCrit==null) h.upCrit=0; if(h.upCritDmg==null) h.upCritDmg=0; if(h.upDef==null) h.upDef=0;
+    if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upManaLv==null) h.upManaLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
+    if(h.upAtk==null) h.upAtk=0; if(h.upHp==null) h.upHp=0; if(h.upMana==null) h.upMana=0; if(h.upCrit==null) h.upCrit=0; if(h.upCritDmg==null) h.upCritDmg=0; if(h.upDef==null) h.upDef=0;
     if(h.talentPts==null) h.talentPts=0;
     if(!h.talents) h.talents={secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false};
     ['secondWind','bloodlust','echo','battleRhythm','giantSlayer','adv1','adv2','adv3'].forEach(k=>{ if(h.talents[k]==null) h.talents[k]=false; });
