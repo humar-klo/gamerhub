@@ -23,6 +23,18 @@ function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
   return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0};
 }
+
+function setHeroLevel(hero,targetLevel){
+  const lvl=Math.max(1,Math.floor(targetLevel||1));
+  while(hero.lvl<lvl){
+    hero.lvl++;
+    hero.maxHp+=6;
+    hero.atk+=2;
+  }
+  hero.xp=0;
+  hero.hp=heroMaxHp(hero);
+  hero.alive=true;
+}
 function heroTemplate(cls){
   if(cls==='Warrior') return mkHero('Warrior','assets/warrior-human.svg',78,11,'block');
   if(cls==='Ranger') return mkHero('Ranger','assets/ranger-human.svg',58,14,'crit');
@@ -43,12 +55,21 @@ function openHeroUnlockChoice(){
 
 function unlockHeroByChoice(heroClass){
   if(state.unlockedSlots>=3) return;
-  state.party.push(heroTemplate(heroClass));
+  const newHero=heroTemplate(heroClass);
+  const beforeCount=state.party.length;
+  if(beforeCount===1){
+    const baseLevel=(state.party[0]?.lvl||1)-5;
+    setHeroLevel(newHero,baseLevel);
+  }else if(beforeCount===2){
+    const avgLevel=state.party.reduce((s,h)=>s+(h.lvl||1),0)/2;
+    setHeroLevel(newHero,avgLevel-5);
+  }
+  state.party.push(newHero);
   state.unlockedSlots=state.party.length;
   state.nextHeroUnlockWave=state.unlockedSlots===2?50:null;
   state.pendingHeroUnlock=false;
   $('heroUnlockContinueBtn').disabled=false;
-  log(`🧭 Reinforcement joined: ${heroClass}! Party slots: ${state.unlockedSlots}/3`);
+  log(`🧭 Reinforcement joined: ${heroClass} at Lv ${newHero.lvl}! Party slots: ${state.unlockedSlots}/3`);
   save();
   draw();
 }
@@ -272,6 +293,25 @@ function drawBattleStats(){
   ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
 }
 
+function drawTotalStats(){
+  const partyLvTotal=state.party.reduce((s,h)=>s+(h.lvl||1),0);
+  const avgLv=state.party.length?partyLvTotal/state.party.length:1;
+  const totalAtk=state.party.reduce((s,h)=>s+heroAtk(h),0);
+  const totalMaxHp=state.party.reduce((s,h)=>s+heroMaxHp(h),0);
+  const totalCrit=state.party.reduce((s,h)=>s+heroCrit(h),0);
+  const avgCrit=state.party.length?totalCrit/state.party.length:0;
+  $('totalStats').innerHTML=[
+    ['Party size', `${state.party.length}/3`],
+    ['Total party level', fmtNum(partyLvTotal)],
+    ['Average party level', avgLv.toFixed(1)],
+    ['Combined ATK', fmtNum(totalAtk)],
+    ['Combined Max HP', fmtNum(totalMaxHp)],
+    ['Average Crit', `${(avgCrit*100).toFixed(1)}%`],
+    ['Team Defense', fmtNum(state.teamBuffDef||0)],
+    ['Team Crit Dmg Bonus', `${Math.round((state.teamBuffCritDmg||0)*100)}%`]
+  ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
+}
+
 function draw(){
   $('wave').textContent=state.wave; $('highestWave').textContent=state.highestWave; $('gold').textContent=state.gold; $('wins').textContent=state.wins;
   $('comboLabel').textContent=`x${comboMult().toFixed(2)}`;
@@ -292,7 +332,7 @@ function draw(){
   $('shopBalanceInfo').innerHTML=`Shop scaling: Heal +4/lv • Revive +6/lv • ATK/HP +9/lv • Crit +10/lv • CritDmg +12/lv • Def +10/lv`;
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
-  drawReviveTargets(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats();
+  drawReviveTargets(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats(); drawTotalStats();
 }
 
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
