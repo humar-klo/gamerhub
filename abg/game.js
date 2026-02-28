@@ -13,7 +13,7 @@ const state={
   unlockedSlots:1,
   nextHeroUnlockWave:50,
   pendingHeroUnlock:false,
-  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1
+  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1,statsView:'total'
 };
 
 function mkHero(name,icon,hp,atk,skill){
@@ -307,20 +307,20 @@ function drawEquipUI(){
   `;
 }
 
-function drawBattleStats(){
+function renderBattleStats(){
   const s=state.stats;
   const secs=Math.max(0,Math.round((Date.now()-(s.waveStartTs||Date.now()))/1000));
-  $('battleStats').innerHTML=[
+  return [
     ['Wave kills', fmtNum(s.waveKills||0)],
     ['Damage dealt', fmtNum(s.dmgDealt||0)],
     ['Damage taken', fmtNum(s.dmgTaken||0)],
     ['Waves cleared', fmtNum(s.wavesCleared||0)],
     ['Current wave time', `${secs}s`],
     ['Last clear time', s.lastWaveMs?`${(s.lastWaveMs/1000).toFixed(1)}s`:'—']
-  ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
+  ];
 }
 
-function drawTotalStats(){
+function renderTotalStats(){
   const partyLvTotal=state.party.reduce((s,h)=>s+(h.lvl||1),0);
   const avgLv=state.party.length?partyLvTotal/state.party.length:1;
   const totalAtk=state.party.reduce((s,h)=>s+heroAtk(h),0);
@@ -329,7 +329,7 @@ function drawTotalStats(){
   const avgCrit=state.party.length?totalCrit/state.party.length:0;
   const totalDef=state.party.reduce((s,h)=>s+(h.upDef||0),0);
   const avgCritDmg=state.party.length?state.party.reduce((s,h)=>s+(h.upCritDmg||0),0)/state.party.length:0;
-  $('totalStats').innerHTML=[
+  return [
     ['Party size', `${state.party.length}/3`],
     ['Total party level', fmtNum(partyLvTotal)],
     ['Average party level', avgLv.toFixed(1)],
@@ -338,7 +338,14 @@ function drawTotalStats(){
     ['Average Crit', `${(avgCrit*100).toFixed(1)}%`],
     ['Total Defense', fmtNum(totalDef)],
     ['Avg Crit Dmg Bonus', `${Math.round(avgCritDmg*100)}%`]
-  ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
+  ];
+}
+
+function drawStatsPanel(){
+  const rows=state.statsView==='battle'?renderBattleStats():renderTotalStats();
+  $('statsViewTotal').classList.toggle('active',state.statsView==='total');
+  $('statsViewBattle').classList.toggle('active',state.statsView==='battle');
+  $('totalStats').innerHTML=rows.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
 }
 
 function draw(){
@@ -351,7 +358,7 @@ function draw(){
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
-  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawBattleStats(); drawTotalStats();
+  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawStatsPanel();
 }
 
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
@@ -814,6 +821,8 @@ $('buyAmt1').onclick=()=>{ state.shopBuyAmount=1; draw(); };
 $('buyAmt5').onclick=()=>{ state.shopBuyAmount=5; draw(); };
 $('buyAmt10').onclick=()=>{ state.shopBuyAmount=10; draw(); };
 $('buyAmtMAX').onclick=()=>{ state.shopBuyAmount='max'; draw(); };
+$('statsViewTotal').onclick=()=>{ state.statsView='total'; draw(); save(); };
+$('statsViewBattle').onclick=()=>{ state.statsView='battle'; draw(); save(); };
 
 $('heroUnlockChoices').onclick=(ev)=>{
   const b=ev.target.closest('button[data-unlock-hero]');
@@ -877,6 +886,7 @@ function normalizeLoadedState(){
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
   if(state.upgradeHeroIdx==null) state.upgradeHeroIdx=0;
+  if(!state.statsView) state.statsView='total';
   if(!state.mode) state.mode='push';
   if(state.combo==null) state.combo=0;
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
@@ -898,6 +908,7 @@ function startNewGame(playerName,startClass){
   state.nextHeroUnlockWave=50;
   state.pendingHeroUnlock=false;
   state.upgradeHeroIdx=0;
+  state.statsView='total';
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};
