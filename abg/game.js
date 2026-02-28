@@ -361,17 +361,29 @@ function enemyAttack(c,d){
   }
 }
 function step(){
-  const p=alive(state.party), e=alive(state.enemies); if(!p.length||!e.length) return endWave();
+  // Defensive cleanup: if a stale enemy object lingers (dead/invalid), normalize before resolving actions.
+  state.enemies = state.enemies.filter(x => x && Number.isFinite(x.hp));
+  const p=alive(state.party), e=alive(state.enemies);
+  if(!p.length||!e.length) return endWave();
+
   const a=pick(p), b=pickEnemyTarget()||pick(e);
+  if(!b || !b.alive) return endWave();
   markTarget(`e${state.enemies.indexOf(b)}`);
   heroAttack(a,b); flash(`e${state.enemies.indexOf(b)}`);
-  const e2=alive(state.enemies); if(!e2.length) return endWave();
+
+  const e2=alive(state.enemies);
+  if(!e2.length) return endWave();
+
   const c=pick(e2), d=pickHeroTarget()||pick(p);
+  if(!c || !d) return endWave();
   markTarget(`p${state.party.indexOf(d)}`);
   enemyAttack(c,d); flash(`p${state.party.indexOf(d)}`);
+
   if(c.alive && c.haste>0 && Math.random()<c.haste){
-    const d2=pickHeroTarget()||pick(alive(state.party)); if(d2){ enemyAttack(c,d2); flash(`p${state.party.indexOf(d2)}`); }
+    const d2=pickHeroTarget()||pick(alive(state.party));
+    if(d2){ enemyAttack(c,d2); flash(`p${state.party.indexOf(d2)}`); }
   }
+
   state.party.forEach(h=>{
     if(h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1-(h.setCdr||0));
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
@@ -470,7 +482,7 @@ function endWave(){
   save(); draw();
 }
 
-$('startBtn').onclick=()=>startWave();
+$('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
 $('modeBtn').onclick=()=>{ 
