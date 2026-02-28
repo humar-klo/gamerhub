@@ -1,25 +1,39 @@
 body{margin:0;font-family:Inter,system-ui;background:#090d1a;color:#e8edff}
 .app{max-width:1100px;margin:20px auto;padding:0 14px}
 h1{margin:.2rem 0}
-.topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#11172a;border:1px solid #2a355f;padding:10px;border-radius:10px}
+.topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:linear-gradient(180deg,#141c35,#10162a);border:1px solid #2a355f;padding:10px;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
+.topbar>div{background:rgba(255,255,255,.03);border:1px solid rgba(133,159,255,.2);padding:5px 8px;border-radius:8px}
+#comboLabel{color:#ffd27a;text-shadow:0 0 10px rgba(255,192,96,.35)}
 button{background:#5d6dff;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
 button:hover{opacity:.92}
+button:disabled{opacity:.45;cursor:not-allowed}
 button.danger{background:#a6425c}
+.mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.mini-actions button{padding:6px 9px;font-size:.85rem;background:#4b5ae0}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
 .panel{background:#11172a;border:1px solid #2a355f;border-radius:10px;padding:10px}
-.forest{position:relative;overflow:hidden;background:linear-gradient(180deg,#12213a 0%,#0f2a2a 48%,#1f3124 100%)}
-.forest::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 10% 90%,rgba(24,80,36,.7),transparent 30%),radial-gradient(circle at 90% 85%,rgba(20,70,32,.7),transparent 28%),radial-gradient(circle at 40% 12%,rgba(78,137,207,.15),transparent 35%);pointer-events:none}
+.forest{position:relative;overflow:hidden;background:#0f1d18 url('assets/forest-bg.svg') center/cover no-repeat}
+.forest::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,20,34,.18),rgba(0,0,0,.35));pointer-events:none}
 .battlefield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-top:12px;min-height:130px}
 .vs{opacity:.9;font-weight:800;letter-spacing:.12em}
 .lane{display:flex;gap:8px;min-height:84px;align-items:center;flex-wrap:wrap;z-index:1}
-.sprite{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#1a2244;border:1px solid #394a88;box-shadow:0 6px 18px rgba(0,0,0,.3);overflow:hidden;animation:bob 2.2s ease-in-out infinite}
+.sprite{position:relative;width:70px;height:70px;border-radius:14px;display:grid;place-items:center;background:rgba(18,23,46,.72);border:1px solid #44548f;box-shadow:0 8px 20px rgba(0,0,0,.35);overflow:hidden;animation:bob 2.2s ease-in-out infinite}
 .sprite:nth-child(even){animation-delay:.4s}
 .sprite img{width:100%;height:100%;object-fit:cover}
 .sprite.enemy{background:#3a1f2b;border-color:#7b3a52}
 .sprite.hit{animation:hit .16s ease}
+.fx{position:absolute;inset:12px;border-radius:999px;pointer-events:none}
+.fx.slash{border:3px solid rgba(255,255,255,.75);transform:rotate(-25deg);animation:fxSlash .24s ease}
+.fx.crit{background:radial-gradient(circle,rgba(255,230,120,.9),rgba(255,230,120,0));animation:fxPop .24s ease}
+.fx.burst{background:radial-gradient(circle,rgba(132,228,255,.9),rgba(132,228,255,0));animation:fxPop .24s ease}
+.fx.block{border:3px solid rgba(120,190,255,.95);animation:fxPop .24s ease}
+.fx.hitfx{background:radial-gradient(circle,rgba(255,120,120,.85),rgba(255,120,120,0));animation:fxPop .24s ease}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes hit{0%{transform:translateX(0)}50%{transform:translateX(6px) scale(1.04)}100%{transform:translateX(0)}}
+@keyframes fxSlash{0%{opacity:0;transform:scale(.4) rotate(-25deg)}30%{opacity:1}100%{opacity:0;transform:scale(1.2) rotate(-25deg)}}
+@keyframes fxPop{0%{opacity:0;transform:scale(.3)}40%{opacity:1}100%{opacity:0;transform:scale(1.25)}}
 .mini-ico{width:16px;height:16px;vertical-align:-2px;border-radius:4px;margin-right:6px}
+#party,#enemies{min-height:280px;max-height:280px;overflow:auto;padding-right:4px}
 .unit{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid #273258;padding:7px 0}
 .unit .name{font-weight:600}
 .hpbar{height:7px;background:#1a2140;border-radius:999px;overflow:hidden;border:1px solid #2e3a6c;margin-top:4px}
@@ -27,4 +41,35 @@ button.danger{background:#a6425c}
 .dead{opacity:.42}
 .log{height:260px;overflow:auto;background:#0b1020;padding:8px;border-radius:8px;border:1px solid #273258;font-size:.92rem}
 .loot-r{color:#9ecbff}.loot-m{color:#bb9cff}.loot-l{color:#ffcb72}
-@media(max-width:800px){.grid{grid-template-columns:1fr}.battlefield{grid-template-columns:1fr;}.vs{display:none}}
+.set-summary{font-size:.78rem;line-height:1.35;background:#0b1020;border:1px solid #273258;border-radius:8px;padding:8px;margin-bottom:10px;color:#cfd9ff}
+.set-summary b{color:#f2f5ff}
+#battleStats{font-variant-numeric:tabular-nums}
+#battleStats .stat-row{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+#battleStats .stat-row span:last-child{color:#f2f5ff}
+.hero-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.hero-pill{background:#35437a;padding:6px 10px;font-size:.84rem}
+.hero-pill.active{background:#6a7eff}
+.equip-body{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;align-items:start;grid-auto-rows:minmax(58px,auto);grid-template-areas:
+  '. helm .'
+  'shoulders paperdoll amulet'
+  'weapon paperdoll offhand'
+  'gloves chest ring1'
+  'belt boots ring2';
+}
+.slot{display:flex;flex-direction:column;gap:4px;background:#0b1020;border:1px solid #273258;border-radius:8px;padding:6px;min-height:58px}
+.slot b{font-size:.82rem;opacity:.95;display:flex;align-items:center;gap:4px}
+.slot-ico{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#182343}
+.slot span{opacity:.9;font-size:.75rem;line-height:1.2}
+.rarity-rare{border-color:#4c74c9;box-shadow:inset 0 0 0 1px rgba(112,159,255,.18)}
+.rarity-mythic{border-color:#8660d8;box-shadow:0 0 12px rgba(145,99,255,.2),inset 0 0 0 1px rgba(189,145,255,.18)}
+.rarity-legendary{border-color:#d39b4d;box-shadow:0 0 14px rgba(255,180,74,.22),inset 0 0 0 1px rgba(255,214,142,.2)}
+.slot-helm{grid-area:helm}.slot-shoulders{grid-area:shoulders}.slot-amulet{grid-area:amulet}
+.slot-weapon{grid-area:weapon}.slot-chest{grid-area:chest}.slot-offhand{grid-area:offhand}
+.slot-gloves{grid-area:gloves}.slot-belt{grid-area:belt}.slot-ring1{grid-area:ring1}
+.slot-boots{grid-area:boots}.slot-ring2{grid-area:ring2}
+.pdoll{grid-area:paperdoll;position:relative;min-height:170px;border:1px solid #2a355f;border-radius:12px;background:radial-gradient(circle at 50% 25%,rgba(135,167,255,.2),rgba(8,12,24,.85));display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pdoll::before{content:'';position:absolute;width:54px;height:54px;top:18px;border-radius:50%;background:rgba(221,232,255,.2);border:1px solid rgba(161,181,236,.35)}
+.pdoll::after{content:'';position:absolute;width:88px;height:120px;top:74px;border-radius:50px 50px 30px 30px;background:rgba(178,202,255,.14);border:1px solid rgba(150,175,235,.3)}
+.pdoll-label{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:.78rem;opacity:.85}
+
+@media(max-width:800px){.grid{grid-template-columns:1fr}.battlefield{grid-template-columns:1fr;}.vs{display:none}.equip-body{grid-template-columns:1fr 1fr;grid-template-areas:'shoulders amulet' 'helm helm' 'weapon offhand' 'gloves ring1' 'chest chest' 'belt boots' 'paperdoll ring2';}.pdoll{min-height:140px}}

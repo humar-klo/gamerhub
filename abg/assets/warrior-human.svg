@@ -1,0 +1,17 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'>
+  <defs>
+    <linearGradient id='armor' x1='0' y1='0' x2='0' y2='1'>
+      <stop offset='0' stop-color='#6a7aa8'/><stop offset='1' stop-color='#33405f'/>
+    </linearGradient>
+  </defs>
+  <rect width='128' height='128' rx='16' fill='#1a2238'/>
+  <ellipse cx='64' cy='112' rx='28' ry='8' fill='#000' opacity='.25'/>
+  <circle cx='64' cy='30' r='14' fill='#f0c7a2'/>
+  <rect x='46' y='44' width='36' height='36' rx='8' fill='url(#armor)'/>
+  <rect x='40' y='50' width='10' height='26' rx='5' fill='#56658f'/>
+  <rect x='78' y='50' width='10' height='26' rx='5' fill='#56658f'/>
+  <rect x='52' y='80' width='10' height='26' rx='4' fill='#495679'/>
+  <rect x='66' y='80' width='10' height='26' rx='4' fill='#495679'/>
+  <path d='M92 40l10 8-18 26-8-6z' fill='#c8d3ff'/><rect x='84' y='72' width='10' height='28' rx='3' fill='#8e9bc8'/>
+  <rect x='50' y='18' width='28' height='8' rx='4' fill='#7d8fbd'/>
+</svg>

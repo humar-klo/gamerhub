@@ -1,0 +1,32 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 500' preserveAspectRatio='xMidYMid slice'>
+  <defs>
+    <linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'>
+      <stop offset='0' stop-color='#20385f'/><stop offset='1' stop-color='#2f5a46'/>
+    </linearGradient>
+    <linearGradient id='fog' x1='0' y1='0' x2='0' y2='1'>
+      <stop offset='0' stop-color='rgba(177,220,255,.22)'/><stop offset='1' stop-color='rgba(177,220,255,0)'/>
+    </linearGradient>
+  </defs>
+  <rect width='1600' height='500' fill='url(#sky)'/>
+  <ellipse cx='320' cy='90' rx='220' ry='70' fill='rgba(180,230,255,.18)'/>
+  <ellipse cx='1220' cy='110' rx='260' ry='85' fill='rgba(180,230,255,.16)'/>
+  <rect y='140' width='1600' height='120' fill='url(#fog)'/>
+  <g fill='#1f3f2f'>
+    <polygon points='20,350 90,170 160,350'/><polygon points='120,350 190,160 260,350'/>
+    <polygon points='250,350 320,165 390,350'/><polygon points='370,350 440,150 510,350'/>
+    <polygon points='510,350 580,170 650,350'/><polygon points='640,350 710,160 780,350'/>
+    <polygon points='760,350 830,165 900,350'/><polygon points='900,350 970,155 1040,350'/>
+    <polygon points='1030,350 1100,170 1170,350'/><polygon points='1160,350 1230,160 1300,350'/>
+    <polygon points='1290,350 1360,165 1430,350'/><polygon points='1420,350 1490,170 1560,350'/>
+  </g>
+  <g fill='#29543d'>
+    <polygon points='0,390 80,220 160,390'/><polygon points='140,390 220,210 300,390'/>
+    <polygon points='280,390 360,220 440,390'/><polygon points='420,390 500,205 580,390'/>
+    <polygon points='560,390 640,220 720,390'/><polygon points='700,390 780,210 860,390'/>
+    <polygon points='840,390 920,220 1000,390'/><polygon points='980,390 1060,205 1140,390'/>
+    <polygon points='1120,390 1200,220 1280,390'/><polygon points='1260,390 1340,215 1420,390'/>
+    <polygon points='1400,390 1480,220 1560,390'/>
+  </g>
+  <rect y='350' width='1600' height='150' fill='#2a3a25'/>
+  <path d='M0 420 C 220 390, 380 450, 600 420 S 980 390, 1200 420 S 1450 450, 1600 420 L1600 500 L0 500 Z' fill='#314a2b'/>
+</svg>

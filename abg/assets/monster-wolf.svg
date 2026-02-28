@@ -1,0 +1,11 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'>
+  <rect width='128' height='128' rx='16' fill='#2d2020'/>
+  <ellipse cx='64' cy='108' rx='30' ry='8' fill='#000' opacity='.25'/>
+  <path d='M22 74l20-20 20 6 18-14 22 20-10 22H30z' fill='#6b6e78'/>
+  <polygon points='36,58 46,40 50,62' fill='#7a7d88'/>
+  <polygon points='78,50 94,34 92,56' fill='#7a7d88'/>
+  <rect x='40' y='86' width='10' height='18' rx='3' fill='#575a63'/>
+  <rect x='60' y='86' width='10' height='18' rx='3' fill='#575a63'/>
+  <rect x='78' y='86' width='10' height='18' rx='3' fill='#575a63'/>
+  <circle cx='88' cy='64' r='3' fill='#ff6b6b'/>
+</svg>

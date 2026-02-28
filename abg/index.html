@@ -9,15 +9,21 @@
 <body>
   <main class="app">
     <header>
-      <h1>ABG v0.4 — Auto Battler RPG</h1>
-      <p>Auto waves • Boss every 5 • Loot • Talents • Revive</p>
+      <h1>ABG v0.8 — Auto Battler RPG</h1>
+      <p>Infinite wave replay • Grinding • Class evolution • Equipment sets • Active skills</p>
     </header>
 
     <section class="topbar">
       <div>Wave <b id="wave">1</b></div>
+      <div>Highest <b id="highestWave">0</b></div>
       <div>Gold <b id="gold">0</b></div>
-      <div>Wins <b id="wins">0</b></div>
+      <div>Kills <b id="wins">0</b></div>
+      <div>Combo <b id="comboLabel">x1.00</b></div>
       <div>Speed <b id="speedLabel">1x</b></div>
+      <div>Mode <b id="modeLabel">Push</b></div>
+      <button id="modeBtn">Toggle Mode</button>
+      <button id="prevWaveBtn">◀ Wave</button>
+      <button id="nextWaveBtn">Wave ▶</button>
       <button id="startBtn">Start Run</button>
       <button id="pauseBtn">Pause</button>
       <button id="speedBtn">Speed</button>
@@ -43,14 +49,32 @@
         <h2>Camp Shop</h2>
         <button id="healBtn">Heal Party (8g)</button>
         <button id="reviveBtn">Revive KO Ally (14g)</button>
+        <div id="reviveTargets" class="mini-actions"></div>
         <button id="atkBtn">+2 Team ATK (16g)</button>
         <button id="hpBtn">+10 Team Max HP (16g)</button>
       </div>
       <div class="panel">
         <h2>Talents (<span id="talentPts">0</span>)</h2>
-        <button id="talAtk">+2 Team ATK (1 pt)</button>
-        <button id="talHp">+12 Team Max HP (1 pt)</button>
-        <button id="talCrit">+5% Crit chance (1 pt)</button>
+        <button id="talSecondWind" title="Once per wave, each hero survives a lethal hit and returns at 30% HP.">Second Wind (1 pt)</button>
+        <button id="talBloodlust" title="Each kill in a wave grants stacking +1 team ATK (up to +10) until wave ends.">Bloodlust (1 pt)</button>
+        <button id="talEcho" title="15% chance for attacks to trigger an extra echo hit for 40% damage.">Arcane Echo (1 pt)</button>
+        <button id="talTreasure" title="Increases gold from kills and boosts item drop chance.">Treasure Hunter (1 pt)</button>
+        <button id="talRhythm" title="Kills reduce all living allies' active skill cooldown by 1.">Battle Rhythm (1 pt)</button>
+        <button id="talSlayer" title="Deal extra damage to bosses and elite enemies.">Giant Slayer (1 pt)</button>
+      </div>
+      <div class="panel">
+        <h2>Commands</h2>
+        <div id="skillBar" class="mini-actions"></div>
+      </div>
+      <div class="panel">
+        <h2>Battle Stats</h2>
+        <div id="battleStats" class="set-summary"></div>
+      </div>
+      <div class="panel">
+        <h2>Equipment</h2>
+        <div id="equipHeroList" class="hero-pills"></div>
+        <div id="setSummary" class="set-summary"></div>
+        <div id="equipSlots" class="equip-body"></div>
       </div>
       <div class="panel">
         <h2>Latest Loot</h2>
