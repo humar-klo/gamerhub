@@ -8,7 +8,7 @@ const state={
   partyTalentPts:0,
   partyTalents:{treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0},
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
-  runtime:{lastStepTs:0,loopResets:0},
+  runtime:{lastStepTs:0,loopResets:0,lastIdleReason:'init',errors:0,lastError:''},
   watchdog:{noChangeTicks:0,lastTotalHp:0},
   waveAtkStack:0,
   playerName:'Commander',
@@ -449,7 +449,9 @@ function drawDebugBadge(){
   const sinceStep=state.runtime?.lastStepTs?Math.max(0,Math.round((now-state.runtime.lastStepTs)/1000)):'—';
   const waitingUnlock=!$('heroUnlockModal').classList.contains('hidden');
   const status=waitingUnlock?'awaiting hero pick':(state.running?(state.paused?'paused':'running'):'idle');
-  $('debugBadge').innerHTML=`state: <b>${status}</b><br>since step: <b>${sinceStep}s</b> • loop resets: <b>${state.runtime?.loopResets||0}</b>`;
+  const reason=state.runtime?.lastIdleReason||'—';
+  const errs=state.runtime?.errors||0;
+  $('debugBadge').innerHTML=`state: <b>${status}</b><br>since step: <b>${sinceStep}s</b> • loop resets: <b>${state.runtime?.loopResets||0}</b><br>reason: <b>${reason}</b> • errs: <b>${errs}</b>`;
 }
 
 function draw(){
@@ -498,6 +500,7 @@ function startWave(){
   }
   state.running=true;
   state.paused=false;
+  state.runtime.lastIdleReason='running';
   draw();
   loop();
 }
@@ -831,6 +834,7 @@ function maybeDropItem(enemy){
 function endWave(){
   clearInterval(state.tick); state.running=false;
   const p=alive(state.party).length, e=alive(state.enemies).length;
+  state.runtime.lastIdleReason=`endWave p:${p} e:${e}`;
   if(p>0&&e===0){
     const firstClear=state.wave>state.highestWave;
     state.partyTalentPts += 1 + (state.wave%5===0?1:0);
@@ -845,12 +849,14 @@ function endWave(){
         state.nextHeroUnlockWave=null;
       }
       if(!$('heroUnlockModal').classList.contains('hidden')){
+        state.runtime.lastIdleReason='awaiting-hero-pick';
         save();
         draw();
         return;
       }
       if(state.mode==='push') state.wave=state.highestWave+1;
     }else{
+      state.runtime.lastIdleReason='wave-replay-cleared';
       log(`♻️ Wave ${state.wave} replay cleared. Respawning for grind.`);
     }
     const postWaveHeal=0.2 + (state.partyTalents.battleMedicLv||0)*0.03;
@@ -871,6 +877,7 @@ function endWave(){
     state.wave=Math.max(1,Math.min(state.wave||1,(state.highestWave||1)+1));
     state.waveAtkStack=0;
     state.bossPending=false;
+    state.runtime.lastIdleReason='party-wiped';
     log(`💀 Party wiped. -${penalty}g. Switched to GRIND at Wave ${state.wave}.`);
     state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.mana=0;h.secondWindUsed=false;});
     state.enemies=[];
@@ -886,7 +893,7 @@ function endWave(){
 }
 
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
-$('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
+$('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; state.runtime.lastIdleReason=state.paused?'paused-by-user':'running'; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
 $('autoSkillBtn').onclick=()=>{ state.autoSkillCast=!state.autoSkillCast; draw(); save(); };
 $('teamTalentsBtn').onclick=()=>openTeamTalentModal();
@@ -1132,7 +1139,10 @@ function normalizeLoadedState(){
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
   state.wave=Math.max(1,state.wave||1);
   if(!state.stats) state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
-  if(!state.runtime) state.runtime={lastStepTs:0,loopResets:0};
+  if(!state.runtime) state.runtime={lastStepTs:0,loopResets:0,lastIdleReason:'loaded',errors:0,lastError:''};
+  if(state.runtime.lastIdleReason==null) state.runtime.lastIdleReason='loaded';
+  if(state.runtime.errors==null) state.runtime.errors=0;
+  if(state.runtime.lastError==null) state.runtime.lastError='';
   if(!state.watchdog) state.watchdog={noChangeTicks:0,lastTotalHp:0};
   state.stats.waveStartTs=state.stats.waveStartTs||Date.now();
   state.unlockedSlots=Math.max(1,Math.min(3,state.party.length||1));
@@ -1156,12 +1166,25 @@ function startNewGame(playerName,startClass){
   state.autoSkillCast=true;
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
-  state.runtime={lastStepTs:0,loopResets:0};
+  state.runtime={lastStepTs:0,loopResets:0,lastIdleReason:'new-game',errors:0,lastError:''};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};
   save();
   draw();
   log(`Welcome, ${state.playerName}. ${startClass} leads the run!`);
 }
+
+window.addEventListener('error',(ev)=>{
+  state.runtime.errors=(state.runtime.errors||0)+1;
+  state.runtime.lastError=String(ev.message||'error');
+  state.runtime.lastIdleReason=`js-error: ${state.runtime.lastError.slice(0,32)}`;
+  draw();
+});
+window.addEventListener('unhandledrejection',(ev)=>{
+  state.runtime.errors=(state.runtime.errors||0)+1;
+  state.runtime.lastError=String(ev.reason||'promise-rejection');
+  state.runtime.lastIdleReason=`promise-error: ${state.runtime.lastError.slice(0,28)}`;
+  draw();
+});
 
 const hasSave=load();
 if(hasSave) normalizeLoadedState();
