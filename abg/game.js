@@ -264,10 +264,12 @@ function drawUpgradeUI(){
     ['Mana',`${Math.floor(h.mana||0)}/${heroManaMax(h)}`],
     ['Total ATK',`${heroAtk(h)}`],
     ['Total Crit',`${(heroCrit(h)*100).toFixed(1)}%`],
-    ['Total Crit Dmg Bonus',`${Math.round((h.upCritDmg||0)*100)}%`],
-    ['ATK/HP breakdown',`${h.atk}+${h.upAtk||0}+${h.gearAtk||0} / ${h.maxHp}+${h.upHp||0}+${h.gearHp||0}`]
+    ['Total Crit Dmg Bonus',`${Math.round((h.upCritDmg||0)*100)}%`]
   ];
-  $('upgradeInfo').innerHTML=`<div class='upgrade-split'><div class='upgrade-col'>${left.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div><div class='upgrade-col'>${right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
+  const heroRow=`<div class='upgrade-hero-title'>Hero ${h.name} • Level: ${h.lvl}</div>`;
+  const leftRows=left.filter(([k])=>k!=='Hero').map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
+  const rightRows=right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
+  $('upgradeInfo').innerHTML=`${heroRow}<div class='upgrade-split'><div class='upgrade-col'>${leftRows}</div><div class='upgrade-col'>${rightRows}</div></div>`;
   const pAtk=previewHeroBulkCost(h,'upAtkLv'), pHp=previewHeroBulkCost(h,'upHpLv'), pMana=previewHeroBulkCost(h,'upManaLv'), pCrit=previewHeroBulkCost(h,'upCritLv'), pCd=previewHeroBulkCost(h,'upCritDmgLv'), pDef=previewHeroBulkCost(h,'upDefLv');
   $('upAtkBtn').textContent=`+2 ATK x${pAtk.buys} (${pAtk.total}g)`;
   $('upHpBtn').textContent=`+12 Max HP x${pHp.buys} (${pHp.total}g)`;
