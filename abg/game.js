@@ -266,7 +266,7 @@ function drawUpgradeUI(){
     ['Total Crit',`${(heroCrit(h)*100).toFixed(1)}%`],
     ['Total Crit Dmg Bonus',`${Math.round((h.upCritDmg||0)*100)}%`]
   ];
-  const heroRow=`<div class='upgrade-hero-title'>Hero ${h.name} • Level: ${h.lvl}</div>`;
+  const heroRow=`<div class='upgrade-hero-title'>Hero ${h.name} • Level ${h.lvl}</div>`;
   const leftRows=left.filter(([k])=>k!=='Hero').map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
   const rightRows=right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
   $('upgradeInfo').innerHTML=`${heroRow}<div class='upgrade-split'><div class='upgrade-col'>${leftRows}</div><div class='upgrade-col'>${rightRows}</div></div>`;
