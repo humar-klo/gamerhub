@@ -6,6 +6,7 @@ const state={
   wave:1,highestWave:0,gold:0,wins:0,running:false,paused:false,tick:null,speed:1,
   talentPts:0,autoMode:true,mode:'push',combo:0,
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
+  watchdog:{noChangeTicks:0,lastTotalHp:0},
   shopHealLv:0,shopReviveLv:0,shopAtkLv:0,shopHpLv:0,
   teamBuffAtk:0,teamBuffHp:0,
   talents:{secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false},
@@ -242,6 +243,8 @@ function spawnWave(w=state.wave){
   state.stats.dmgDealt=0;
   state.stats.dmgTaken=0;
   state.stats.waveStartTs=Date.now();
+  state.watchdog.noChangeTicks=0;
+  state.watchdog.lastTotalHp=0;
   state.party.forEach(h=>h.secondWindUsed=false);
 }
 function startWave(){
@@ -391,6 +394,24 @@ function step(){
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
   });
   state.enemies.forEach(x=>{ if(x.markedTurns>0) x.markedTurns--; });
+
+  // Stuck-wave watchdog: if total HP across both teams doesn't change for too long, soft-reset wave.
+  const totalHp = alive(state.party).reduce((s,x)=>s+Math.max(0,x.hp),0) + alive(state.enemies).reduce((s,x)=>s+Math.max(0,x.hp),0);
+  if(state.watchdog.lastTotalHp===totalHp){
+    state.watchdog.noChangeTicks++;
+  } else {
+    state.watchdog.noChangeTicks=0;
+    state.watchdog.lastTotalHp=totalHp;
+  }
+  if(state.watchdog.noChangeTicks>24){
+    log('🧯 Watchdog: combat stalled, soft-resetting current wave.');
+    state.running=false;
+    state.enemies=[];
+    spawnWave(state.wave);
+    startWave();
+    return;
+  }
+
   draw();
 }
 
@@ -540,6 +561,7 @@ if(state.combo==null) state.combo=0;
 if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
 state.wave=Math.max(1,Math.min(state.wave,state.highestWave+1));
 if(!state.stats) state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
+if(!state.watchdog) state.watchdog={noChangeTicks:0,lastTotalHp:0};
 state.stats.waveStartTs=state.stats.waveStartTs||Date.now();
 draw();
 log('v1.0 ready. New: tactical targeting, live battle stats, and cleaner run pacing.');
