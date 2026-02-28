@@ -219,12 +219,17 @@ function drawUpgradeUI(){
   const h=state.party[state.upgradeHeroIdx]||state.party[0];
   if(!h) return;
   $('upgradeInfo').innerHTML=[
-    [`Target`,`${h.name} Lv${h.lvl}`],
+    ['Hero',`${h.name} • Level: ${h.lvl}`],
     ['ATK rank',`${h.upAtkLv||0}`],
     ['HP rank',`${h.upHpLv||0}`],
     ['Crit rank',`${h.upCritLv||0}`],
     ['CritDmg rank',`${h.upCritDmgLv||0}`],
-    ['Def rank',`${h.upDefLv||0}`]
+    ['Def rank',`${h.upDefLv||0}`],
+    ['Total ATK',`${heroAtk(h)}`],
+    ['Total Max HP',`${heroMaxHp(h)}`],
+    ['Total Crit',`${(heroCrit(h)*100).toFixed(1)}%`],
+    ['Total Crit Dmg Bonus',`${Math.round((h.upCritDmg||0)*100)}%`],
+    ['Total Defense',`${h.upDef||0}`]
   ].map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
   $('upAtkBtn').textContent=`+2 ATK (${heroUpCost(h,'upAtkLv')}g)`;
   $('upHpBtn').textContent=`+12 Max HP (${heroUpCost(h,'upHpLv')}g)`;
