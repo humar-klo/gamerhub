@@ -837,7 +837,10 @@ function renderTalentModal(){
     `<button data-btal='atkPctLv' ${atkRank>=5?'disabled':''} title='${atkMeta.detail}'><b>${atkMeta.name} [${atkRank}/5] (${atkRank>=5?'max':'5 pt'})</b><br><small>${atkMeta.short}</small></button>`+
     `<button data-btal='hpPctLv' ${hpRank>=5?'disabled':''} title='${hpMeta.detail}'><b>${hpMeta.name} [${hpRank}/5] (${hpRank>=5?'max':'5 pt'})</b><br><small>${hpMeta.short}</small></button>`;
   const [a,b]=advancedOptions(h.name);
-  const preview=(cls)=>`<b>${cls}</b> — Skill: ${skillName({...h,advClass:cls})}<br>${advTalentNames(cls).join(' • ')}`;
+  const preview=(cls)=>{
+    const fake={...h,advClass:cls};
+    return `<b>${cls}</b> — Skill: ${skillName(fake)}<br><small>${skillTooltip(fake)}</small><br>${advTalentNames(cls).join(' • ')}`;
+  };
   $('advPreview').innerHTML=`You can inspect before choosing:<br>${preview(a)}<br><br>${preview(b)}`;
   if(!h.advClass){ $('advTalentButtons').innerHTML=`<small>Choose advanced class in Party panel at Lv 10+ to unlock class tree.</small>`; return; }
   const names=advTalentNames(h.advClass);
