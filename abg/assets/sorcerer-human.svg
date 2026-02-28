@@ -5,7 +5,7 @@
       <stop offset='1' stop-color='#3ec7ff'/>
     </radialGradient>
   </defs>
-  <rect width='128' height='128' rx='16' fill='#170f33'/>
+  <rect width='128' height='128' rx='16' fill='#241848'/>
   <ellipse cx='64' cy='112' rx='30' ry='8' fill='#000' opacity='.25'/>
   <circle cx='64' cy='30' r='14' fill='#efc4a0'/>
   <path d='M44 46l20-10 20 10-4 38a10 10 0 0 1-10 9H58a10 10 0 0 1-10-9z' fill='#6e4be2'/>
