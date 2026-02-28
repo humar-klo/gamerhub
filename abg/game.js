@@ -897,14 +897,20 @@ function buyBulk(costFn,apply){
   return buys;
 }
 
+function keepCombatAlive(){
+  if(state.running && !state.paused){
+    loop();
+  }
+}
+
 function selectedUpgradeHero(){ return state.party[state.upgradeHeroIdx]||state.party[0]; }
 
-$('upAtkBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upAtkLv',i),()=>{ h.upAtkLv=(h.upAtkLv||0)+1; h.upAtk=(h.upAtk||0)+2; }); if(!buys) return; log(`${h.name} ATK upgraded (${buys}x).`); save(); draw(); };
-$('upHpBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upHpLv',i),()=>{ h.upHpLv=(h.upHpLv||0)+1; h.upHp=(h.upHp||0)+12; h.hp=Math.min(heroMaxHp(h),h.hp+12); }); if(!buys) return; log(`${h.name} Max HP upgraded (${buys}x).`); save(); draw(); };
-$('upManaBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upManaLv',i),()=>{ h.upManaLv=(h.upManaLv||0)+1; h.upMana=(h.upMana||0)+10; h.mana=Math.min(heroManaMax(h),h.mana+10); }); if(!buys) return; log(`${h.name} Max Mana upgraded (${buys}x).`); save(); draw(); };
-$('upCritBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upCritLv',i),()=>{ h.upCritLv=(h.upCritLv||0)+1; h.upCrit=(h.upCrit||0)+0.01; }); if(!buys) return; log(`${h.name} Crit upgraded (${buys}x).`); save(); draw(); };
-$('upCritDmgBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upCritDmgLv',i),()=>{ h.upCritDmgLv=(h.upCritDmgLv||0)+1; h.upCritDmg=(h.upCritDmg||0)+0.05; }); if(!buys) return; log(`${h.name} Crit Damage upgraded (${buys}x).`); save(); draw(); };
-$('upDefBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upDefLv',i),()=>{ h.upDefLv=(h.upDefLv||0)+1; h.upDef=(h.upDef||0)+1; }); if(!buys) return; log(`${h.name} Defense upgraded (${buys}x).`); save(); draw(); };
+$('upAtkBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upAtkLv',i),()=>{ h.upAtkLv=(h.upAtkLv||0)+1; h.upAtk=(h.upAtk||0)+2; }); if(!buys) return; log(`${h.name} ATK upgraded (${buys}x).`); save(); draw(); keepCombatAlive(); };
+$('upHpBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upHpLv',i),()=>{ h.upHpLv=(h.upHpLv||0)+1; h.upHp=(h.upHp||0)+12; h.hp=Math.min(heroMaxHp(h),h.hp+12); }); if(!buys) return; log(`${h.name} Max HP upgraded (${buys}x).`); save(); draw(); keepCombatAlive(); };
+$('upManaBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upManaLv',i),()=>{ h.upManaLv=(h.upManaLv||0)+1; h.upMana=(h.upMana||0)+10; h.mana=Math.min(heroManaMax(h),h.mana+10); }); if(!buys) return; log(`${h.name} Max Mana upgraded (${buys}x).`); save(); draw(); keepCombatAlive(); };
+$('upCritBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upCritLv',i),()=>{ h.upCritLv=(h.upCritLv||0)+1; h.upCrit=(h.upCrit||0)+0.01; }); if(!buys) return; log(`${h.name} Crit upgraded (${buys}x).`); save(); draw(); keepCombatAlive(); };
+$('upCritDmgBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upCritDmgLv',i),()=>{ h.upCritDmgLv=(h.upCritDmgLv||0)+1; h.upCritDmg=(h.upCritDmg||0)+0.05; }); if(!buys) return; log(`${h.name} Crit Damage upgraded (${buys}x).`); save(); draw(); keepCombatAlive(); };
+$('upDefBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk((i=0)=>heroUpCost(h,'upDefLv',i),()=>{ h.upDefLv=(h.upDefLv||0)+1; h.upDef=(h.upDef||0)+1; }); if(!buys) return; log(`${h.name} Defense upgraded (${buys}x).`); save(); draw(); keepCombatAlive(); };
 
 function openTalentModal(i){
   state.talentHeroIdx=i;
