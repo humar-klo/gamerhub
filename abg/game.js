@@ -15,7 +15,7 @@ const state={
   unlockedSlots:1,
   nextHeroUnlockWave:50,
   pendingHeroUnlock:false,
-  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1,statsView:'total'
+  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1,statsView:'total',autoSkillCast:true
 };
 
 function mkHero(name,icon,hp,atk,skill){
@@ -395,6 +395,7 @@ function draw(){
   $('speedLabel').textContent=`${state.speed}x`;
   $('modeLabel').textContent=state.mode==='push'?'Push':'Grind';
   $('teamTalentsBtn').textContent=`Team Talents (${state.partyTalentPts||0})`;
+  $('autoSkillBtn').textContent=`Auto Skill: ${state.autoSkillCast?'ON':'OFF'}`;
   $('vsLabel').textContent=state.wave%5===0?'BOSS':'AUTO';
   $('startBtn').textContent=state.running?'In Combat':'Start / Resume';
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
@@ -579,6 +580,14 @@ function step(){
   state.party.forEach(x=>{ if(x.hp<=0) x.alive=false; });
   const p=alive(state.party), e=alive(state.enemies);
   if(!p.length||!e.length) return endWave();
+
+  if(state.autoSkillCast){
+    const ready=state.party.map((h,i)=>({h,i})).filter(x=>x.h.alive && x.h.abilityCd<=0 && alive(state.enemies).length>0);
+    if(ready.length){
+      ready.sort((a,b)=>(b.h.focus||0)-(a.h.focus||0));
+      castHeroSkill(ready[0].i);
+    }
+  }
 
   const a=pick(p);
   let b=pickEnemyTarget()||pick(e);
@@ -769,6 +778,7 @@ function endWave(){
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
+$('autoSkillBtn').onclick=()=>{ state.autoSkillCast=!state.autoSkillCast; draw(); save(); };
 $('teamTalentsBtn').onclick=()=>openTeamTalentModal();
 $('modeBtn').onclick=()=>{ 
   state.mode=state.mode==='push'?'grind':'push';
@@ -974,6 +984,7 @@ function normalizeLoadedState(){
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
   if(state.upgradeHeroIdx==null) state.upgradeHeroIdx=0;
+  if(state.autoSkillCast==null) state.autoSkillCast=true;
   if(!state.statsView) state.statsView='total';
   if(!state.mode) state.mode='push';
   if(state.combo==null) state.combo=0;
@@ -999,6 +1010,7 @@ function startNewGame(playerName,startClass){
   state.pendingHeroUnlock=false;
   state.upgradeHeroIdx=0;
   state.statsView='total';
+  state.autoSkillCast=true;
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};
