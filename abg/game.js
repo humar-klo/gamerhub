@@ -206,7 +206,7 @@ function drawList(id,arr,isParty=true){
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
         ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Focus ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
-      ${isParty?`<button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button>`:''}
+      ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='Use ${skillName(u)} (Empowered at 50 Focus)'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
     </div>`).join('');
 }
@@ -244,15 +244,15 @@ function drawClassChoices(){
   });
 }
 function skillName(h){
-  if(h.name==='Warrior') return h.advClass==='Berserker'?'Rage Slam':'Guardian Cry';
-  if(h.name==='Ranger') return h.advClass==='Sniper'?'Deadeye Volley':'Volley';
-  return h.advClass==='Warlock'?'Soul Drain':'Arcane Nova';
-}
-function drawSkillBar(){
-  $('skillBar').innerHTML=state.party.map((h,i)=>{
-    const disabled=!h.alive||h.abilityCd>0||!state.enemies.length;
-    return `<button data-skill='${i}' ${disabled?'disabled':''} title='Use ${skillName(h)} (Empowered at 50 Focus)'>${h.name}: ${skillName(h)} ${h.abilityCd>0?`(${h.abilityCd})`:''}</button>`;
-  }).join('');
+  if(h.advClass==='Paladin') return 'Guardian Oath';
+  if(h.advClass==='Berserker') return 'Rage Slam';
+  if(h.advClass==='Sniper') return 'Deadeye Volley';
+  if(h.advClass==='Warden') return 'Thorn Volley';
+  if(h.advClass==='Sorcerer') return 'Tempest Nova';
+  if(h.advClass==='Warlock') return 'Soul Drain';
+  if(h.name==='Warrior') return 'Guardian Cry';
+  if(h.name==='Ranger') return 'Volley';
+  return 'Arcane Nova';
 }
 function slotText(it){
   return it?`${it.name} (+${it.atk} ATK / +${it.hp} HP${it.crit?` / +${Math.round(it.crit*100)}% crit`:''})`:'— empty —';
@@ -340,7 +340,7 @@ function draw(){
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
-  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats(); drawTotalStats();
+  drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawBattleStats(); drawTotalStats();
 }
 
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
@@ -422,21 +422,28 @@ function castHeroSkill(i){
   if(empowered) h.focus=Math.max(0,h.focus-50);
   const setMult=1+(h.setSkillMult||0)+(empowered?0.2:0)+((h.talents?.adv1 && h.advClass==='Sorcerer')?0.1:0);
   if(h.name==='Warrior'){
-    const shield=Math.floor((h.advClass==='Berserker'?8:14) * (empowered?1.35:1));
+    const isB=h.advClass==='Berserker';
+    const shield=Math.floor((isB?8:14) * (empowered?1.35:1));
     state.party.forEach(p=>{ if(p.alive) p.tempShield=(p.tempShield||0)+shield; });
-    if(h.advClass==='Berserker'){
+    if(isB){
       const t=pick(state.enemies); if(t){ dealDamageToEnemy(h,t,heroAtk(h)*1.25*setMult); vfxAt(`e${state.enemies.indexOf(t)}`,'crit'); }
+    }else if(h.advClass==='Paladin'){
+      state.party.forEach(p=>{ if(p.alive) p.hp=Math.min(heroMaxHp(p),p.hp+(empowered?8:5)); });
     }
     log(`🛡️ ${h.name} used ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }else if(h.name==='Ranger'){
-    const mult=(h.advClass==='Sniper'?0.95:0.7)*setMult;
-    alive(state.enemies).forEach(t=>{ dealDamageToEnemy(h,t,heroAtk(h)*mult); t.markedTurns=2; t.markedAmp=(h.advClass==='Sniper'?0.32:0.2) + ((h.talents?.adv3&&h.advClass==='Sniper')?0.08:0); vfxAt(`e${state.enemies.indexOf(t)}`,'slash'); });
+    const isS=h.advClass==='Sniper', isW=h.advClass==='Warden';
+    const mult=(isS?0.95:isW?0.78:0.7)*setMult;
+    alive(state.enemies).forEach(t=>{ dealDamageToEnemy(h,t,heroAtk(h)*mult); t.markedTurns=2; t.markedAmp=(isS?0.32:isW?0.24:0.2) + ((h.talents?.adv3&&isS)?0.08:0); vfxAt(`e${state.enemies.indexOf(t)}`,'slash'); });
+    if(isW) state.party.forEach(p=>{ if(p.alive) p.tempShield=(p.tempShield||0)+(empowered?5:3); });
     log(`🏹 ${h.name} used ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }else{
     const t=pick(state.enemies); if(!t) return;
-    const mult=(h.advClass==='Warlock'?1.8:1.4)*setMult;
+    const isWl=h.advClass==='Warlock', isSorc=h.advClass==='Sorcerer';
+    const mult=(isWl?1.8:isSorc?1.55:1.4)*setMult;
     dealDamageToEnemy(h,t,heroAtk(h)*mult); vfxAt(`e${state.enemies.indexOf(t)}`,'burst');
-    if(h.advClass==='Warlock') h.hp=Math.min(heroMaxHp(h),h.hp+(empowered?16:10));
+    if(isWl) h.hp=Math.min(heroMaxHp(h),h.hp+(empowered?16:10));
+    if(isSorc){ const spl=alive(state.enemies).filter(x=>x!==t).slice(0,empowered?2:1); spl.forEach(x=>{ dealDamageToEnemy(h,x,heroAtk(h)*0.6*setMult); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); }); }
     log(`✨ ${h.name} cast ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }
   h.abilityCd=8;
@@ -745,8 +752,8 @@ function renderTalentModal(){
     `<button data-btal='atkPctLv' ${atkRank>=5?'disabled':''}>Might Training [${atkRank}/5] (5 pt)</button>`+
     `<button data-btal='hpPctLv' ${hpRank>=5?'disabled':''}>Fortitude Training [${hpRank}/5] (5 pt)</button>`;
   const [a,b]=advancedOptions(h.name);
-  const preview=(cls)=>`<b>${cls}</b>: ${advTalentNames(cls).join(' • ')}`;
-  $('advPreview').innerHTML=`You can inspect before choosing:<br>${preview(a)}<br>${preview(b)}`;
+  const preview=(cls)=>`<b>${cls}</b> — Skill: ${skillName({...h,advClass:cls})}<br>${advTalentNames(cls).join(' • ')}`;
+  $('advPreview').innerHTML=`You can inspect before choosing:<br>${preview(a)}<br><br>${preview(b)}`;
   if(!h.advClass){ $('advTalentButtons').innerHTML=`<small>Choose advanced class in Party panel at Lv 10+ to unlock class tree.</small>`; return; }
   const names=advTalentNames(h.advClass);
   $('advTalentButtons').innerHTML=[0,1,2].map(i=>`<button data-atal='adv${i+1}' ${(h.talents[`adv${i+1}`])?'disabled':''}>${names[i]} (${h.talents[`adv${i+1}`]?'owned':'5 pt'})</button>`).join('');
@@ -798,6 +805,8 @@ $('advTalentButtons').onclick=(ev)=>{
 $('closeTalentModalBtn').onclick=()=>$('talentModal').classList.add('hidden');
 
 $('party').onclick=(ev)=>{
+  const sbtn=ev.target.closest('button[data-skill-hero]');
+  if(sbtn){ castHeroSkill(Number(sbtn.dataset.skillHero)); save(); return; }
   const tbtn=ev.target.closest('button[data-open-tal]');
   if(tbtn){ openTalentModal(Number(tbtn.dataset.openTal)); return; }
   const btn=ev.target.closest('button[data-class]'); if(!btn) return;
@@ -806,7 +815,6 @@ $('party').onclick=(ev)=>{
 };
 $('equipHeroList').onclick=(ev)=>{ const b=ev.target.closest('button[data-ehero]'); if(!b) return; state.equipHeroIdx=Number(b.dataset.ehero); drawEquipUI(); };
 $('upgradeHeroList').onclick=(ev)=>{ const b=ev.target.closest('button[data-uphero]'); if(!b) return; state.upgradeHeroIdx=Number(b.dataset.uphero); drawUpgradeUI(); };
-$('skillBar').onclick=(ev)=>{ const b=ev.target.closest('button[data-skill]'); if(!b) return; castHeroSkill(Number(b.dataset.skill)); save(); };
 
 function normalizeLoadedState(){
   state.party=state.party.map(h=>{
