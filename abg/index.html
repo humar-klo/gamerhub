@@ -70,17 +70,6 @@
         <div id="enemies"></div>
       </div>
       <div class="panel">
-        <h2>Talents (<span id="talentPts">0</span>)</h2>
-        <button id="talSecondWind" title="Once per wave, each hero survives a lethal hit and returns at 30% HP.">Second Wind (5 pt)</button>
-        <button id="talBloodlust" title="Each kill in a wave grants stacking +1 team ATK (up to +10) until wave ends.">Bloodlust (5 pt)</button>
-        <button id="talEcho" title="15% chance for attacks to trigger an extra echo hit for 40% damage.">Arcane Echo (5 pt)</button>
-        <button id="talTreasure" title="Increases gold from kills and boosts item drop chance.">Treasure Hunter (5 pt)</button>
-        <button id="talRhythm" title="Kills reduce all living allies' active skill cooldown by 1.">Battle Rhythm (5 pt)</button>
-        <button id="talSlayer" title="Deal extra damage to bosses and elite enemies.">Giant Slayer (5 pt)</button>
-        <button id="talAtkPct" title="Stacks permanent team attack bonus in tiers.">Might Training (+5/10/15/20/25%)</button>
-        <button id="talHpPct" title="Stacks permanent team max HP bonus in tiers.">Fortitude Training (+5/10/15/20/25%)</button>
-      </div>
-      <div class="panel">
         <h2>Commands</h2>
         <div id="skillBar" class="mini-actions"></div>
       </div>
@@ -129,6 +118,17 @@
       <p>Choose a new hero to join your party.</p>
       <div id="heroUnlockChoices" class="mini-actions"></div>
       <button id="heroUnlockContinueBtn" disabled>Continue Run</button>
+    </div>
+  </div>
+
+  <div id="talentModal" class="modal hidden">
+    <div class="modal-card" style="width:min(760px,95vw)">
+      <h2 id="talentHeroTitle">Talent Tree</h2>
+      <div id="talentHeroPts" class="set-summary"></div>
+      <div id="baseTalentButtons" class="mini-actions"></div>
+      <div id="advPreview" class="set-summary"></div>
+      <div id="advTalentButtons" class="mini-actions"></div>
+      <button id="closeTalentModalBtn">Close</button>
     </div>
   </div>
 

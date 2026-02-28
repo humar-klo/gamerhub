@@ -4,22 +4,21 @@ const SETS=['Vanguard','Wildheart','Astral'];
 
 const state={
   wave:1,highestWave:0,gold:0,wins:0,running:false,paused:false,tick:null,speed:1,
-  talentPts:0,autoMode:true,mode:'push',combo:0,
+  autoMode:true,mode:'push',combo:0,
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
   watchdog:{noChangeTicks:0,lastTotalHp:0},
-  talents:{secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0},
   waveAtkStack:0,
   playerName:'Commander',
   party:[mkHero('Warrior','assets/warrior-human.svg',78,11,'block')],
   unlockedSlots:1,
   nextHeroUnlockWave:20,
   pendingHeroUnlock:false,
-  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,shopBuyAmount:1
+  enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1
 };
 
 function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
-  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0};
+  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
 }
 
 function setHeroLevel(hero,targetLevel){
@@ -143,35 +142,41 @@ const TALENT_COST=5;
 const TALENT_PCT_TIERS=[5,10,15,20,25];
 
 function xpToNext(h){ return 20 + (h.lvl-1)*12; }
-function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + (h.upCrit||0) + (h.advClass==='Sniper'?0.12:0) + h.focus*0.001; }
+function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + (h.upCrit||0) + (h.advClass==='Sniper'?0.12:0) + ((h.talents?.adv1 && h.advClass==='Sniper')?0.06:0) + h.focus*0.001; }
 function heroAtk(h){
   let v=h.atk+(h.upAtk||0)+h.gearAtk+h.setAtk+state.waveAtkStack;
-  const atkPct=TALENT_PCT_TIERS.slice(0,state.talents.atkPctLv||0).reduce((s,x)=>s+x,0)/100;
+  const atkPct=TALENT_PCT_TIERS.slice(0,h.talents?.atkPctLv||0).reduce((s,x)=>s+x,0)/100;
   v=Math.floor(v*(1+atkPct));
   if(h.advClass==='Berserker' && h.hp/heroMaxHp(h)<0.45) v+=Math.ceil(v*0.22);
+  if(h.talents?.adv1 && h.advClass==='Berserker' && h.hp/heroMaxHp(h)<0.45) v+=Math.ceil(v*0.12);
+  if(h.talents?.adv2 && (h.advClass==='Paladin' || h.advClass==='Warlock')) v+=Math.ceil(v*0.08);
   if(h.advClass==='Warlock') v+=2;
   if(h.focus>=80) v+=2;
   return v;
 }
 function heroMaxHp(h){
   let v=h.maxHp+(h.upHp||0)+h.gearHp+h.setHp;
-  const hpPct=TALENT_PCT_TIERS.slice(0,state.talents.hpPctLv||0).reduce((s,x)=>s+x,0)/100;
+  const hpPct=TALENT_PCT_TIERS.slice(0,h.talents?.hpPctLv||0).reduce((s,x)=>s+x,0)/100;
   v=Math.floor(v*(1+hpPct));
   if(h.advClass==='Paladin') v+=16;
   if(h.advClass==='Warden') v+=10;
+  if(h.talents?.adv1 && h.advClass==='Warden') v+=Math.ceil(v*0.12);
   return v;
 }
 function enemyArmor(e){ return Math.max(0,e.armor||0); }
 function dealDamageToEnemy(attacker,enemy,raw){
   let dmg=Math.max(1,Math.floor(raw*comboMult()));
   if(enemy.markedTurns>0) dmg=Math.floor(dmg*(1+enemy.markedAmp));
-  if(state.talents.giantSlayer && (enemy.boss||enemy.elite)) dmg=Math.floor(dmg*1.18);
+  if(attacker.talents?.giantSlayer && (enemy.boss||enemy.elite)) dmg=Math.floor(dmg*1.18);
+  if(attacker.talents?.adv2 && (attacker.advClass==='Berserker' || attacker.advClass==='Warlock') && (enemy.boss||enemy.elite)) dmg=Math.floor(dmg*1.1);
   dmg=Math.max(1,dmg-enemyArmor(enemy));
   enemy.hp-=dmg;
   state.stats.dmgDealt=(state.stats.dmgDealt||0)+dmg;
   const eid=state.enemies.indexOf(enemy);
   if(eid>=0) floatText(`e${eid}`,`-${dmg}`);
   if(attacker.setLeech>0) attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*attacker.setLeech));
+  if(attacker.talents?.adv1 && attacker.advClass==='Warlock') attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*0.06));
+  if(attacker.talents?.adv3 && attacker.advClass==='Berserker') attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*0.04));
   if(enemy.hp<=0&&enemy.alive){ enemy.alive=false; onEnemyKilled(enemy,attacker); }
   return dmg;
 }
@@ -199,8 +204,9 @@ function drawList(id,arr,isParty=true){
       <div>
         <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}${u.boss?' 👑':''}${u.advClass?` • ${u.advClass}`:''}${!isParty?` • ${u.type}`:''}</div>
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
-        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • ATK ${heroAtk(u)} • Focus ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
+        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Focus ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
+      ${isParty?`<button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
     </div>`).join('');
 }
@@ -327,13 +333,11 @@ function drawTotalStats(){
 function draw(){
   $('wave').textContent=state.wave; $('highestWave').textContent=state.highestWave; $('gold').textContent=state.gold; $('wins').textContent=state.wins;
   $('comboLabel').textContent=`x${comboMult().toFixed(2)}`;
-  $('speedLabel').textContent=`${state.speed}x`; $('talentPts').textContent=state.talentPts;
+  $('speedLabel').textContent=`${state.speed}x`;
   $('modeLabel').textContent=state.mode==='push'?'Push':'Grind';
   $('vsLabel').textContent=state.wave%5===0?'BOSS':'AUTO';
   $('startBtn').textContent=state.running?'In Combat':'Start / Resume';
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
-  $('talAtkPct').textContent=`Might Training (+5/10/15/20/25%) [${state.talents.atkPctLv||0}/5] (5 pt)`;
-  $('talHpPct').textContent=`Fortitude Training (+5/10/15/20/25%) [${state.talents.hpPctLv||0}/5] (5 pt)`;
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
   drawUpgradeUI(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats(); drawTotalStats();
@@ -399,15 +403,15 @@ function gainFocus(h,amount){ h.focus=clamp((h.focus||0)+amount,0,100); }
 
 function onEnemyKilled(enemy,killer){
   state.stats.waveKills=(state.stats.waveKills||0)+1;
-  const goldGain=Math.max(1,Math.round(enemy.gold*(state.talents.treasure?1.5:1)));
+  const goldGain=Math.max(1,Math.round(enemy.gold*(killer.talents?.treasure?1.5:1)));
   state.gold+=goldGain; state.wins++; log(`💰 ${enemy.name} dropped ${goldGain}g`);
   gainXp(killer,enemy.xp);
   gainFocus(killer,12);
   state.combo=Math.min(20,(state.combo||0)+1);
   if(state.combo>0 && state.combo%5===0) log(`🔥 Combo surged to ${state.combo} (${comboMult().toFixed(2)}x damage)`);
   if(state.combo>0 && state.combo%8===0){ state.gold+=2; log('✨ Combo bonus +2g'); }
-  if(state.talents.bloodlust){ state.waveAtkStack=Math.min(10,state.waveAtkStack+1); }
-  if(state.talents.battleRhythm){ state.party.forEach(h=>{ if(h.alive&&h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1); }); }
+  if(killer.talents?.bloodlust){ state.waveAtkStack=Math.min(10,state.waveAtkStack+1); }
+  if(killer.talents?.battleRhythm){ state.party.forEach(h=>{ if(h.alive&&h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1); }); }
   maybeDropItem(enemy);
 }
 
@@ -416,7 +420,7 @@ function castHeroSkill(i){
   if(!h||!h.alive||h.abilityCd>0||!alive(state.enemies).length) return;
   const empowered=(h.focus||0)>=50;
   if(empowered) h.focus=Math.max(0,h.focus-50);
-  const setMult=1+(h.setSkillMult||0)+(empowered?0.2:0);
+  const setMult=1+(h.setSkillMult||0)+(empowered?0.2:0)+((h.talents?.adv1 && h.advClass==='Sorcerer')?0.1:0);
   if(h.name==='Warrior'){
     const shield=Math.floor((h.advClass==='Berserker'?8:14) * (empowered?1.35:1));
     state.party.forEach(p=>{ if(p.alive) p.tempShield=(p.tempShield||0)+shield; });
@@ -426,7 +430,7 @@ function castHeroSkill(i){
     log(`🛡️ ${h.name} used ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }else if(h.name==='Ranger'){
     const mult=(h.advClass==='Sniper'?0.95:0.7)*setMult;
-    alive(state.enemies).forEach(t=>{ dealDamageToEnemy(h,t,heroAtk(h)*mult); t.markedTurns=2; t.markedAmp=(h.advClass==='Sniper'?0.32:0.2); vfxAt(`e${state.enemies.indexOf(t)}`,'slash'); });
+    alive(state.enemies).forEach(t=>{ dealDamageToEnemy(h,t,heroAtk(h)*mult); t.markedTurns=2; t.markedAmp=(h.advClass==='Sniper'?0.32:0.2) + ((h.talents?.adv3&&h.advClass==='Sniper')?0.08:0); vfxAt(`e${state.enemies.indexOf(t)}`,'slash'); });
     log(`🏹 ${h.name} used ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }else{
     const t=pick(state.enemies); if(!t) return;
@@ -443,7 +447,7 @@ function heroAttack(a,b){
   let dmg=heroAtk(a);
   const critChance=heroCrit(a);
   if(Math.random()<critChance){
-    const critMult=(a.advClass==='Sniper'?2.1:1.75)*(1+(a.upCritDmg||0));
+    const critMult=(a.advClass==='Sniper'?2.1:1.75)*(1+(a.upCritDmg||0)+((a.talents?.adv2 && a.advClass==='Sniper')?0.15:0));
     dmg=Math.floor(dmg*critMult);
     log(`💥 ${a.name} crit!`); vfxAt(`e${state.enemies.indexOf(b)}`,'crit');
   }
@@ -455,10 +459,11 @@ function heroAttack(a,b){
     return;
   }
   dealDamageToEnemy(a,b,dmg); vfxAt(`e${state.enemies.indexOf(b)}`,'slash');
-  if(a.name==='Ranger'){ b.markedTurns=2; b.markedAmp=(a.advClass==='Sniper'?0.3:0.16); }
-  if(a.advClass==='Paladin'){ const t=alive(state.party).sort((x,y)=>x.hp/heroMaxHp(x)-y.hp/heroMaxHp(y))[0]; if(t){ t.hp=Math.min(heroMaxHp(t),t.hp+4); } }
+  if(a.name==='Ranger'){ b.markedTurns=2; b.markedAmp=(a.advClass==='Sniper'?0.3:0.16) + ((a.talents?.adv3&&a.advClass==='Sniper')?0.08:0); }
+  if(a.advClass==='Paladin'){ const t=alive(state.party).sort((x,y)=>x.hp/heroMaxHp(x)-y.hp/heroMaxHp(y))[0]; if(t){ t.hp=Math.min(heroMaxHp(t),t.hp+4); } if(a.talents?.adv3){ a.hp=Math.min(heroMaxHp(a),a.hp+2); } }
   if(a.advClass==='Warlock'){ a.hp=Math.min(heroMaxHp(a),a.hp+2); }
-  if(state.talents.echo && Math.random()<0.15 && b.alive){ dealDamageToEnemy(a,b,dmg*0.4); vfxAt(`e${state.enemies.indexOf(b)}`,'burst'); }
+  const echoChance=(a.talents?.echo?0.15:0) + ((a.talents?.adv2 && a.advClass==='Sorcerer')?0.1:0);
+  if(echoChance>0 && Math.random()<echoChance && b.alive){ dealDamageToEnemy(a,b,dmg*0.4); vfxAt(`e${state.enemies.indexOf(b)}`,'burst'); }
   gainFocus(a,8);
   if(a.cd>0) a.cd--;
 }
@@ -479,7 +484,8 @@ function enemyAttack(c,d){
     const absorbed=Math.min(dmg,d.tempShield); d.tempShield-=absorbed; dmg-=absorbed;
     if(absorbed>0) vfxAt(`p${state.party.indexOf(d)}`,'block');
   }
-  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0));
+  const classDef=(d.talents?.adv2 && d.advClass==='Warden')?1:0;
+  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0)-classDef);
   if(dmg>0){
     const final=Math.max(1,dmg);
     d.hp-=final;
@@ -492,7 +498,7 @@ function enemyAttack(c,d){
   if(c.affix==='Bastion' && Math.random()<0.15){ c.hp=Math.min(c.maxHp,c.hp+2); }
   gainFocus(d,6);
   if(d.hp<=0&&d.alive){
-    if(state.talents.secondWind && !d.secondWindUsed){ d.secondWindUsed=true; d.hp=Math.ceil(heroMaxHp(d)*0.3); log(`🪽 ${d.name} triggered Second Wind!`); return; }
+    if(d.talents?.secondWind && !d.secondWindUsed){ d.secondWindUsed=true; const ratio=(d.talents?.adv3 && d.advClass==='Warden')?0.45:0.3; d.hp=Math.ceil(heroMaxHp(d)*ratio); log(`🪽 ${d.name} triggered Second Wind!`); return; }
     d.alive=false; state.combo=0; log(`${c.name} downed ${d.name} (combo reset)`);
   }
 }
@@ -530,7 +536,8 @@ function step(){
   }
 
   state.party.forEach(h=>{
-    if(h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1-(h.setCdr||0));
+    const extraCdr=(h.talents?.adv3 && h.advClass==='Sorcerer')?1:0;
+    if(h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1-(h.setCdr||0)-extraCdr);
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
   });
   state.enemies.forEach(x=>{ if(x.markedTurns>0) x.markedTurns--; });
@@ -560,13 +567,24 @@ function gainXp(hero,amt){
   while(hero.xp>=xpToNext(hero)){
     hero.xp-=xpToNext(hero); hero.lvl++; hero.maxHp+=6; hero.atk+=2; hero.hp=Math.min(heroMaxHp(hero),hero.hp+8);
     log(`🌟 ${hero.name} reached Lv ${hero.lvl}`);
-    if(hero.lvl%3===0) state.talentPts+=2;
+    if(hero.lvl%3===0) hero.talentPts=(hero.talentPts||0)+2;
   }
 }
 function advancedOptions(name){
   if(name==='Warrior') return ['Paladin','Berserker'];
   if(name==='Ranger') return ['Sniper','Warden'];
   return ['Sorcerer','Warlock'];
+}
+function advTalentNames(cls){
+  const m={
+    Paladin:['Bulwark (+1 def)','Zeal (+10% atk)','Beacon (+2 self-heal/hit)'],
+    Berserker:['Ruin (+12% low-hp atk)','Executioner (+10% vs elites/boss)','Bloodguard (+4% leech)'],
+    Sniper:['Sharpshot (+6% crit)','Headhunter (+15% crit dmg)','Pinpoint (+8% marked dmg)'],
+    Warden:['Ironhide (+12% hp)','Aegis (+1 def)','Safeguard (stronger 2nd wind)'],
+    Sorcerer:['Overcharge (+10% skill dmg)','Chainspark (+10% echo chance)','Timewarp (+1 CDR)'],
+    Warlock:['Soul Siphon (+6% leech)','Doom (+10% vs elites/boss)','Dark Pact (+8% atk)']
+  };
+  return m[cls]||['—','—','—'];
 }
 
 function itemScore(it){ return it.atk*2 + it.hp*0.25 + (it.crit||0)*120 + (it.set?2:0); }
@@ -586,7 +604,8 @@ function mkItem(w){
   return {name:`${rarity} ${slot} i${ilvl}`,rarity,slot,atk,hp,crit,set,scrap:Math.round(3*mult + w*0.5)};
 }
 function maybeDropItem(enemy){
-  const chance=(enemy.boss?0.9:0.18) * (state.talents.treasure?1.25:1) * (enemy.affix?1.12:1);
+  const treasureActive=state.party.some(h=>h.talents?.treasure);
+  const chance=(enemy.boss?0.9:0.18) * (treasureActive?1.25:1) * (enemy.affix?1.12:1);
   if(Math.random()>chance) return;
   const item=mkItem(state.wave);
   const hero=state.party[Math.floor(Math.random()*state.party.length)];
@@ -610,7 +629,8 @@ function endWave(){
   if(p>0&&e===0){
     const firstClear=state.wave>state.highestWave;
     if(firstClear){
-      const reward=12+state.wave*5; state.gold+=reward; state.highestWave=state.wave; state.talentPts += state.wave%5===0?3:0;
+      const reward=12+state.wave*5; state.gold+=reward; state.highestWave=state.wave;
+      if(state.wave%5===0) state.party.forEach(h=>h.talentPts=(h.talentPts||0)+1);
       state.stats.wavesCleared=(state.stats.wavesCleared||0)+1;
       state.stats.lastWaveMs=Date.now()-(state.stats.waveStartTs||Date.now());
       log(`✅ First clear Wave ${state.wave}! +${reward}g in ${(state.stats.lastWaveMs/1000).toFixed(1)}s`);
@@ -708,30 +728,41 @@ $('upCritBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const
 $('upCritDmgBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upCritDmgLv'),()=>{ h.upCritDmgLv=(h.upCritDmgLv||0)+1; h.upCritDmg=(h.upCritDmg||0)+0.05; }); if(!buys) return; log(`${h.name} Crit Damage upgraded (${buys}x).`); save(); draw(); };
 $('upDefBtn').onclick=()=>{ const h=selectedUpgradeHero(); if(!h) return; const buys=buyBulk(()=>heroUpCost(h,'upDefLv'),()=>{ h.upDefLv=(h.upDefLv||0)+1; h.upDef=(h.upDef||0)+1; }); if(!buys) return; log(`${h.name} Defense upgraded (${buys}x).`); save(); draw(); };
 
-function buyTalent(key,label){ if(state.talentPts<TALENT_COST||state.talents[key]) return; state.talentPts-=TALENT_COST; state.talents[key]=true; log(`🧠 Talent unlocked: ${label}`); save(); draw(); }
-$('talSecondWind').onclick=()=>buyTalent('secondWind','Second Wind');
-$('talBloodlust').onclick=()=>buyTalent('bloodlust','Bloodlust');
-$('talEcho').onclick=()=>buyTalent('echo','Arcane Echo');
-$('talTreasure').onclick=()=>buyTalent('treasure','Treasure Hunter');
-$('talRhythm').onclick=()=>buyTalent('battleRhythm','Battle Rhythm');
-$('talSlayer').onclick=()=>buyTalent('giantSlayer','Giant Slayer');
-$('talAtkPct').onclick=()=>{
-  const lv=state.talents.atkPctLv||0;
-  if(lv>=5 || state.talentPts<TALENT_COST) return;
-  state.talentPts-=TALENT_COST;
-  state.talents.atkPctLv=lv+1;
-  log(`🧠 Might Training upgraded to rank ${state.talents.atkPctLv} (+${TALENT_PCT_TIERS[lv]}% ATK).`);
-  save(); draw();
-};
-$('talHpPct').onclick=()=>{
-  const lv=state.talents.hpPctLv||0;
-  if(lv>=5 || state.talentPts<TALENT_COST) return;
-  state.talentPts-=TALENT_COST;
-  state.talents.hpPctLv=lv+1;
-  state.party.forEach(h=>h.hp=Math.min(heroMaxHp(h),h.hp+12));
-  log(`🧠 Fortitude Training upgraded to rank ${state.talents.hpPctLv} (+${TALENT_PCT_TIERS[lv]}% HP).`);
-  save(); draw();
-};
+function openTalentModal(i){
+  state.talentHeroIdx=i;
+  renderTalentModal();
+  $('talentModal').classList.remove('hidden');
+}
+function renderTalentModal(){
+  const h=state.party[state.talentHeroIdx]; if(!h) return;
+  $('talentHeroTitle').textContent=`${h.name} Talent Tree`;
+  $('talentHeroPts').innerHTML=`<div class='stat-row'><span>Talent points</span><span>${h.talentPts||0}</span></div><div class='stat-row'><span>Class</span><span>${h.advClass||'Base'}</span></div>`;
+  const baseButtons=[
+    ['secondWind','Second Wind'],['bloodlust','Bloodlust'],['echo','Arcane Echo'],['treasure','Treasure Hunter'],['battleRhythm','Battle Rhythm'],['giantSlayer','Giant Slayer']
+  ].map(([k,label])=>`<button data-btal='${k}' ${h.talents[k]?'disabled':''}>${label} (${h.talents[k]?'owned':'5 pt'})</button>`).join('');
+  const atkRank=h.talents.atkPctLv||0, hpRank=h.talents.hpPctLv||0;
+  $('baseTalentButtons').innerHTML=baseButtons +
+    `<button data-btal='atkPctLv' ${atkRank>=5?'disabled':''}>Might Training [${atkRank}/5] (5 pt)</button>`+
+    `<button data-btal='hpPctLv' ${hpRank>=5?'disabled':''}>Fortitude Training [${hpRank}/5] (5 pt)</button>`;
+  const [a,b]=advancedOptions(h.name);
+  const preview=(cls)=>`<b>${cls}</b>: ${advTalentNames(cls).join(' • ')}`;
+  $('advPreview').innerHTML=`You can inspect before choosing:<br>${preview(a)}<br>${preview(b)}`;
+  if(!h.advClass){ $('advTalentButtons').innerHTML=`<small>Choose advanced class in Party panel at Lv 10+ to unlock class tree.</small>`; return; }
+  const names=advTalentNames(h.advClass);
+  $('advTalentButtons').innerHTML=[0,1,2].map(i=>`<button data-atal='adv${i+1}' ${(h.talents[`adv${i+1}`])?'disabled':''}>${names[i]} (${h.talents[`adv${i+1}`]?'owned':'5 pt'})</button>`).join('');
+}
+function buyHeroTalent(hero,key){
+  if((hero.talentPts||0)<TALENT_COST) return;
+  if(key==='atkPctLv' || key==='hpPctLv'){
+    if((hero.talents[key]||0)>=5) return;
+    hero.talents[key]=(hero.talents[key]||0)+1;
+  }else{
+    if(hero.talents[key]) return;
+    hero.talents[key]=true;
+  }
+  hero.talentPts-=TALENT_COST;
+  save(); draw(); renderTalentModal();
+}
 
 $('buyAmt1').onclick=()=>{ state.shopBuyAmount=1; draw(); };
 $('buyAmt5').onclick=()=>{ state.shopBuyAmount=5; draw(); };
@@ -754,8 +785,21 @@ $('heroUnlockContinueBtn').onclick=()=>{
     startWave();
   }
 };
+$('baseTalentButtons').onclick=(ev)=>{
+  const b=ev.target.closest('button[data-btal]'); if(!b) return;
+  const h=state.party[state.talentHeroIdx]; if(!h) return;
+  buyHeroTalent(h,b.dataset.btal);
+};
+$('advTalentButtons').onclick=(ev)=>{
+  const b=ev.target.closest('button[data-atal]'); if(!b) return;
+  const h=state.party[state.talentHeroIdx]; if(!h || !h.advClass) return;
+  buyHeroTalent(h,b.dataset.atal);
+};
+$('closeTalentModalBtn').onclick=()=>$('talentModal').classList.add('hidden');
 
 $('party').onclick=(ev)=>{
+  const tbtn=ev.target.closest('button[data-open-tal]');
+  if(tbtn){ openTalentModal(Number(tbtn.dataset.openTal)); return; }
   const btn=ev.target.closest('button[data-class]'); if(!btn) return;
   const i=Number(btn.dataset.i), h=state.party[i]; if(!h||h.advClass) return;
   h.advClass=btn.dataset.class; log(`⚔️ ${h.name} advanced to ${h.advClass}`); save(); draw();
@@ -773,16 +817,16 @@ function normalizeLoadedState(){
     if(h.focus==null) h.focus=0;
     if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
     if(h.upAtk==null) h.upAtk=0; if(h.upHp==null) h.upHp=0; if(h.upCrit==null) h.upCrit=0; if(h.upCritDmg==null) h.upCritDmg=0; if(h.upDef==null) h.upDef=0;
+    if(h.talentPts==null) h.talentPts=0;
+    if(!h.talents) h.talents={secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false};
+    ['secondWind','bloodlust','echo','treasure','battleRhythm','giantSlayer','adv1','adv2','adv3'].forEach(k=>{ if(h.talents[k]==null) h.talents[k]=false; });
+    if(h.talents.atkPctLv==null) h.talents.atkPctLv=0;
+    if(h.talents.hpPctLv==null) h.talents.hpPctLv=0;
     recomputeGearStats(h);
     h.hp=Math.min(h.hp||heroMaxHp(h),heroMaxHp(h));
     h.alive=h.hp>0;
     return h;
   });
-  if(!state.talents) state.talents={secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0};
-  if(state.talents.battleRhythm==null) state.talents.battleRhythm=false;
-  if(state.talents.giantSlayer==null) state.talents.giantSlayer=false;
-  if(state.talents.atkPctLv==null) state.talents.atkPctLv=0;
-  if(state.talents.hpPctLv==null) state.talents.hpPctLv=0;
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
   if(state.upgradeHeroIdx==null) state.upgradeHeroIdx=0;
@@ -801,8 +845,7 @@ function startNewGame(playerName,startClass){
   const hero=heroTemplate(startClass||'Warrior');
   state.playerName=(playerName||'Commander').trim()||'Commander';
   state.wave=1; state.highestWave=0; state.gold=0; state.wins=0; state.running=false; state.paused=false;
-  state.talentPts=0; state.waveAtkStack=0; state.combo=0;
-  state.talents={secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0};
+  state.waveAtkStack=0; state.combo=0;
   state.party=[hero];
   state.unlockedSlots=1;
   state.nextHeroUnlockWave=20;
