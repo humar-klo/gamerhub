@@ -256,7 +256,7 @@ function drawUpgradeUI(){
     ['Mana rank',`${h.upManaLv||0}`],
     ['ATK rank',`${h.upAtkLv||0}`],
     ['Crit rank',`${h.upCritLv||0}`],
-    ['CritDmg rank',`${h.upCritDmgLv||0}`]
+    ['Crit Dmg rank',`${h.upCritDmgLv||0}`]
   ];
   const right=[
     ['Total Max HP',`${heroMaxHp(h)}`],
