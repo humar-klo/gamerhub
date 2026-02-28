@@ -98,7 +98,7 @@ function mkEnemy(i,w,boss=false){
   }
   const xp=Math.round((boss?16:4)+w*1.5 + (elite?2:0) + (affix?2:0));
   const gold=Math.round((boss?8:2)+w*0.6 + (elite?2:0) + (affix?1:0));
-  return {name:boss?`Boss ${w}`:`Mob ${i+1}`,type,icon:icons[i%icons.length],maxHp:Math.round(hp),hp:Math.round(hp),atk:Math.round(atk),alive:true,boss,xp,gold,armor,haste,healer,elite,affix,markedTurns:0,markedAmp:0};
+  return {name:boss?`Boss ${w}`:`Mob ${i+1}`,type,icon:icons[i%icons.length],maxHp:Math.round(hp),hp:Math.round(hp),atk:Math.round(atk),alive:true,boss,xp,gold,armor,haste,healer,elite,affix,markedTurns:0,markedAmp:0,weakenTurns:0};
 }
 
 const $=id=>document.getElementById(id);
@@ -219,7 +219,7 @@ function drawList(id,arr,isParty=true){
       <div>
         <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}${u.boss?' 👑':''}${u.advClass?` • ${u.advClass}`:''}${!isParty?` • ${u.type}`:''}</div>
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
-        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)}/${heroManaMax(u)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
+        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)}/${heroManaMax(u)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.weakenTurns>0?` • Weakened ${u.weakenTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
       ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
@@ -312,11 +312,11 @@ function skillTooltip(h){
   if(h.advClass==='Warden') return 'Thorn Volley: Hits all enemies, applies marks, grants team shield (3, empowered 5). CD 8.';
   if(h.advClass==='Sorcerer') return 'Tempest Nova: Main hit + chain splash (1/2 extra targets). CD 8. Skill scaling boosted by Overcharge.';
   if(h.advClass==='Warlock') return 'Soul Drain: Heavy single-target spell, self-heal 10 (empowered 16). CD 8.';
-  if(h.advClass==='Pope') return 'Sacred Decree: Teamwide heal and shield burst. CD 8. Empowered cast amplifies healing.';
-  if(h.advClass==='Cult Leader') return 'Ritual of Ruin: Team lifesteal chant + enemy-wide damage pulse. CD 8.';
+  if(h.advClass==='Pope') return 'Sacred Decree: Heavy team heal, stronger shields, and mana restore. CD 8. Empowered cast amplifies healing.';
+  if(h.advClass==='Cult Leader') return 'Ritual of Ruin: Multi-target damage pulse, applies Weaken debuff, and self-heals. CD 8.';
   if(h.name==='Warrior') return 'Guardian Cry: Team shield skill. CD 8. Empowered at 50 mana.';
   if(h.name==='Ranger') return 'Volley: Multi-target ranged strike with mark setup. CD 8.';
-  if(h.name==='Priest') return 'Prayer Wave: Team heal and minor smite. CD 8.';
+  if(h.name==='Priest') return 'Prayer Wave: Team heal plus light holy damage. CD 8.';
   return 'Arcane Nova: Spell burst attack. CD 8.';
 }
 function slotText(it){
@@ -510,12 +510,16 @@ function castHeroSkill(i){
   }else if(h.name==='Priest'){
     const t=pick(state.enemies); if(!t) return;
     const isPope=h.advClass==='Pope', isCult=h.advClass==='Cult Leader';
-    const healBase=isPope?(empowered?16:11):(empowered?12:8);
+    const healBase=isPope?(empowered?22:15):isCult?(empowered?12:8):(empowered?16:11);
     const healMult=(isPope && h.talents?.adv1)?1.08:1;
-    state.party.forEach(p=>{ if(p.alive){ p.hp=Math.min(heroMaxHp(p),p.hp+Math.ceil(healBase*healMult)); if(isPope) p.tempShield=(p.tempShield||0)+(empowered?5:3); } });
-    const mult=isCult?1.35:0.9;
+    state.party.forEach(p=>{ if(p.alive){ p.hp=Math.min(heroMaxHp(p),p.hp+Math.ceil(healBase*healMult)); if(isPope){ p.tempShield=(p.tempShield||0)+(empowered?7:4); p.mana=Math.min(heroManaMax(p),(p.mana||0)+(empowered?12:8)); } } });
+    const mult=isCult?1.45:0.85;
     dealDamageToEnemy(h,t,heroAtk(h)*mult*setMult); vfxAt(`e${state.enemies.indexOf(t)}`,'burst');
-    if(isCult){ alive(state.enemies).filter(x=>x!==t).slice(0,empowered?2:1).forEach(x=>{ dealDamageToEnemy(h,x,heroAtk(h)*0.55*setMult); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); }); h.hp=Math.min(heroMaxHp(h),h.hp+(empowered?8:5)); }
+    if(isCult){
+      t.weakenTurns=Math.max(t.weakenTurns||0,2+(empowered?1:0));
+      alive(state.enemies).filter(x=>x!==t).slice(0,empowered?2:1).forEach(x=>{ dealDamageToEnemy(h,x,heroAtk(h)*0.6*setMult); x.weakenTurns=Math.max(x.weakenTurns||0,1); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); });
+      h.hp=Math.min(heroMaxHp(h),h.hp+(empowered?10:6));
+    }
     log(`✨ ${h.name} cast ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }else{
     const t=pick(state.enemies); if(!t) return;
@@ -547,6 +551,12 @@ function heroAttack(a,b){
   }
   dealDamageToEnemy(a,b,dmg); vfxAt(`e${state.enemies.indexOf(b)}`,'slash');
   if(a.name==='Ranger'){ b.markedTurns=2; b.markedAmp=(a.advClass==='Sniper'?0.3:0.16) + ((a.talents?.adv3&&a.advClass==='Sniper')?0.08:0); }
+  if(a.name==='Priest'){
+    const ally=alive(state.party).sort((x,y)=>x.hp/heroMaxHp(x)-y.hp/heroMaxHp(y))[0];
+    const baseHeal=a.advClass==='Pope'?5:a.advClass==='Cult Leader'?2:3;
+    if(ally) ally.hp=Math.min(heroMaxHp(ally),ally.hp+baseHeal);
+    if(a.advClass==='Cult Leader') b.weakenTurns=Math.max(b.weakenTurns||0,1);
+  }
   if(a.advClass==='Paladin'){ const t=alive(state.party).sort((x,y)=>x.hp/heroMaxHp(x)-y.hp/heroMaxHp(y))[0]; if(t){ t.hp=Math.min(heroMaxHp(t),t.hp+4); } if(a.talents?.adv3){ a.hp=Math.min(heroMaxHp(a),a.hp+2); } }
   if(a.advClass==='Warlock'){ a.hp=Math.min(heroMaxHp(a),a.hp+2); }
   const echoChance=(a.talents?.echo?0.15:0) + ((a.talents?.adv2 && a.advClass==='Sorcerer')?0.1:0);
@@ -565,6 +575,7 @@ function enemyAttack(c,d){
     }
   }
   let dmg=c.atk;
+  if((c.weakenTurns||0)>0) dmg=Math.floor(dmg*0.82);
   if(c.affix==='Frenzied' && c.hp/c.maxHp<0.5) dmg=Math.floor(dmg*1.18);
   if(d.skill==='block' && Math.random()<0.26){dmg=Math.floor(dmg*0.55); vfxAt(`p${state.party.indexOf(d)}`,'block');}
   if(d.tempShield>0){
@@ -638,7 +649,7 @@ function step(){
     if(h.abilityCd>0 && Math.random()<((state.partyTalents.furyDrumsLv||0)*0.1)) h.abilityCd=Math.max(0,h.abilityCd-1);
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
   });
-  state.enemies.forEach(x=>{ if(x.markedTurns>0) x.markedTurns--; });
+  state.enemies.forEach(x=>{ if(x.markedTurns>0) x.markedTurns--; if(x.weakenTurns>0) x.weakenTurns--; });
 
   // Stuck-wave watchdog: if total HP across both teams doesn't change for too long, soft-reset wave.
   const totalHp = alive(state.party).reduce((s,x)=>s+Math.max(0,x.hp),0) + alive(state.enemies).reduce((s,x)=>s+Math.max(0,x.hp),0);
