@@ -11,7 +11,7 @@ const state={
   playerName:'Commander',
   party:[mkHero('Warrior','assets/warrior-human.svg',78,11,'block')],
   unlockedSlots:1,
-  nextHeroUnlockWave:20,
+  nextHeroUnlockWave:50,
   pendingHeroUnlock:false,
   enemies:[],equipHeroIdx:0,upgradeHeroIdx:0,talentHeroIdx:0,shopBuyAmount:1
 };
@@ -63,7 +63,7 @@ function unlockHeroByChoice(heroClass){
   }
   state.party.push(newHero);
   state.unlockedSlots=state.party.length;
-  state.nextHeroUnlockWave=state.unlockedSlots===2?50:null;
+  state.nextHeroUnlockWave=state.unlockedSlots===2?100:null;
   state.pendingHeroUnlock=false;
   $('heroUnlockContinueBtn').disabled=false;
   log(`🧭 Reinforcement joined: ${heroClass} at Lv ${newHero.lvl}! Party slots: ${state.unlockedSlots}/3`);
@@ -74,7 +74,7 @@ function unlockHeroByChoice(heroClass){
 function mkEnemy(i,w,boss=false){
   const icons=['assets/monster-goblin.svg','assets/monster-wolf.svg','assets/monster-ogre.svg'];
   const lateScale=1+Math.max(0,w-8)*0.04;
-  const expectedSlots=w>=50?3:w>=20?2:1;
+  const expectedSlots=w>=100?3:w>=50?2:1;
   const slotScale=0.8 + expectedSlots*0.2;
   const baseHp=((boss?58:16)+w*(boss?10:2.2))*lateScale*slotScale;
   const baseAtk=((boss?9:3)+w*(boss?1.5:0.65))*(1+Math.max(0,w-10)*0.03)*(0.85+expectedSlots*0.15);
@@ -838,7 +838,7 @@ function normalizeLoadedState(){
   if(!state.watchdog) state.watchdog={noChangeTicks:0,lastTotalHp:0};
   state.stats.waveStartTs=state.stats.waveStartTs||Date.now();
   state.unlockedSlots=Math.max(1,Math.min(3,state.party.length||1));
-  if(state.nextHeroUnlockWave==null) state.nextHeroUnlockWave=state.unlockedSlots===1?20:state.unlockedSlots===2?50:null;
+  if(state.nextHeroUnlockWave==null) state.nextHeroUnlockWave=state.unlockedSlots===1?50:state.unlockedSlots===2?100:null;
 }
 
 function startNewGame(playerName,startClass){
@@ -848,7 +848,7 @@ function startNewGame(playerName,startClass){
   state.waveAtkStack=0; state.combo=0;
   state.party=[hero];
   state.unlockedSlots=1;
-  state.nextHeroUnlockWave=20;
+  state.nextHeroUnlockWave=50;
   state.pendingHeroUnlock=false;
   state.upgradeHeroIdx=0;
   state.enemies=[];
