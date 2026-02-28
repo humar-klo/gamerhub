@@ -567,4 +567,4 @@ if(!state.stats) state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,l
 if(!state.watchdog) state.watchdog={noChangeTicks:0,lastTotalHp:0};
 state.stats.waveStartTs=state.stats.waveStartTs||Date.now();
 draw();
-log('v1.0 ready. New: tactical targeting, live battle stats, and cleaner run pacing.');
+log('v1.1 ready. New: tactical targeting, live battle stats, grind-stability fixes, and watchdog safety.');
