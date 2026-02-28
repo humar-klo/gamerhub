@@ -54,9 +54,20 @@ const fmtNum=n=>Math.round(n).toLocaleString();
 function pickEnemyTarget(){
   const enemies=state.enemies.filter(e=>e && e.alive && Number.isFinite(e.hp) && Number.isFinite(e.maxHp) && e.hp>0 && e.maxHp>0);
   if(!enemies.length) return null;
+
+  // If marked targets exist, still prioritize them.
   const marked=enemies.filter(e=>(e.markedTurns||0)>0);
   if(marked.length) return marked.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp))[0];
-  return enemies.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp))[0];
+
+  // Hybrid targeting: mostly focus weakest, sometimes spread pressure.
+  const sorted=[...enemies].sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp));
+  const focus=Math.random()<0.7;
+  if(focus) return sorted[0];
+
+  // Pick from upper survivors to avoid one brute being ignored forever.
+  const altPool=sorted.slice(1);
+  if(!altPool.length) return sorted[0];
+  return altPool[Math.floor(Math.random()*altPool.length)];
 }
 function pickHeroTarget(){
   const heroes=state.party.filter(h=>h && h.alive && Number.isFinite(h.hp) && h.hp>0);
@@ -378,13 +389,20 @@ function enemyAttack(c,d){
 }
 function step(){
   // Defensive cleanup: normalize stale/inconsistent entity states before resolving actions.
+  state.targetSwapTick=(state.targetSwapTick||0)+1;
   state.enemies = state.enemies.filter(x => x && Number.isFinite(x.hp));
   state.enemies.forEach(x=>{ if(x.hp<=0) x.alive=false; });
   state.party.forEach(x=>{ if(x.hp<=0) x.alive=false; });
   const p=alive(state.party), e=alive(state.enemies);
   if(!p.length||!e.length) return endWave();
 
-  const a=pick(p), b=pickEnemyTarget()||pick(e);
+  const a=pick(p);
+  let b=pickEnemyTarget()||pick(e);
+  // Periodic forced target swap to distribute aggro and avoid visual "ignored mob" feel.
+  if(state.targetSwapTick%7===0){
+    const pool=e.filter(x=>x!==b);
+    if(pool.length) b=pool[Math.floor(Math.random()*pool.length)];
+  }
   if(!b || !b.alive) return endWave();
   markTarget(`e${state.enemies.indexOf(b)}`);
   heroAttack(a,b); flash(`e${state.enemies.indexOf(b)}`);
