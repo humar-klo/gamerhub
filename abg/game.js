@@ -37,12 +37,13 @@ function setHeroLevel(hero,targetLevel){
 function heroTemplate(cls){
   if(cls==='Warrior') return mkHero('Warrior','assets/warrior-human.svg',78,11,'block');
   if(cls==='Ranger') return mkHero('Ranger','assets/ranger-human.svg',58,14,'crit');
+  if(cls==='Priest') return mkHero('Priest','assets/mage-human.svg',64,10,'holy');
   return mkHero('Mage','assets/mage-human.svg',52,15,'burst');
 }
 
 function openHeroUnlockChoice(){
   if(state.unlockedSlots>=3) return;
-  const pool=['Warrior','Ranger','Mage'];
+  const pool=['Warrior','Ranger','Mage','Priest'];
   const owned=new Set(state.party.map(h=>h.name));
   const choices=pool.filter(c=>!owned.has(c));
   const wrap=$('heroUnlockChoices');
@@ -160,7 +161,7 @@ function heroAtk(h){
   v=Math.floor(v*(1+atkPct));
   if(h.advClass==='Berserker' && h.hp/heroMaxHp(h)<0.45) v+=Math.ceil(v*0.22);
   if(h.talents?.adv1 && h.advClass==='Berserker' && h.hp/heroMaxHp(h)<0.45) v+=Math.ceil(v*0.12);
-  if(h.talents?.adv2 && (h.advClass==='Paladin' || h.advClass==='Warlock')) v+=Math.ceil(v*0.08);
+  if(h.talents?.adv2 && (h.advClass==='Paladin' || h.advClass==='Warlock' || h.advClass==='Pope' || h.advClass==='Cult Leader')) v+=Math.ceil(v*0.08);
   if(h.advClass==='Warlock') v+=2;
   if(h.mana>=80) v+=2;
   const bannerMult=1+((state.partyTalents.warBannerLv||0)*0.04);
@@ -190,6 +191,7 @@ function dealDamageToEnemy(attacker,enemy,raw){
   if(attacker.setLeech>0) attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*attacker.setLeech));
   if(attacker.talents?.adv1 && attacker.advClass==='Warlock') attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*0.06));
   if(attacker.talents?.adv3 && attacker.advClass==='Berserker') attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*0.04));
+  if(attacker.talents?.adv3 && attacker.advClass==='Cult Leader') attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*0.06));
   if(enemy.hp<=0&&enemy.alive){ enemy.alive=false; onEnemyKilled(enemy,attacker); }
   return dmg;
 }
@@ -296,8 +298,11 @@ function skillName(h){
   if(h.advClass==='Warden') return 'Thorn Volley';
   if(h.advClass==='Sorcerer') return 'Tempest Nova';
   if(h.advClass==='Warlock') return 'Soul Drain';
+  if(h.advClass==='Pope') return 'Sacred Decree';
+  if(h.advClass==='Cult Leader') return 'Ritual of Ruin';
   if(h.name==='Warrior') return 'Guardian Cry';
   if(h.name==='Ranger') return 'Volley';
+  if(h.name==='Priest') return 'Prayer Wave';
   return 'Arcane Nova';
 }
 function skillTooltip(h){
@@ -307,8 +312,11 @@ function skillTooltip(h){
   if(h.advClass==='Warden') return 'Thorn Volley: Hits all enemies, applies marks, grants team shield (3, empowered 5). CD 8.';
   if(h.advClass==='Sorcerer') return 'Tempest Nova: Main hit + chain splash (1/2 extra targets). CD 8. Skill scaling boosted by Overcharge.';
   if(h.advClass==='Warlock') return 'Soul Drain: Heavy single-target spell, self-heal 10 (empowered 16). CD 8.';
+  if(h.advClass==='Pope') return 'Sacred Decree: Teamwide heal and shield burst. CD 8. Empowered cast amplifies healing.';
+  if(h.advClass==='Cult Leader') return 'Ritual of Ruin: Team lifesteal chant + enemy-wide damage pulse. CD 8.';
   if(h.name==='Warrior') return 'Guardian Cry: Team shield skill. CD 8. Empowered at 50 mana.';
   if(h.name==='Ranger') return 'Volley: Multi-target ranged strike with mark setup. CD 8.';
+  if(h.name==='Priest') return 'Prayer Wave: Team heal and minor smite. CD 8.';
   return 'Arcane Nova: Spell burst attack. CD 8.';
 }
 function slotText(it){
@@ -499,6 +507,16 @@ function castHeroSkill(i){
     alive(state.enemies).forEach(t=>{ dealDamageToEnemy(h,t,heroAtk(h)*mult); t.markedTurns=2; t.markedAmp=(isS?0.32:isW?0.24:0.2) + ((h.talents?.adv3&&isS)?0.08:0); vfxAt(`e${state.enemies.indexOf(t)}`,'slash'); });
     if(isW) state.party.forEach(p=>{ if(p.alive) p.tempShield=(p.tempShield||0)+(empowered?5:3); });
     log(`🏹 ${h.name} used ${skillName(h)}${empowered?' (Empowered)':''}.`);
+  }else if(h.name==='Priest'){
+    const t=pick(state.enemies); if(!t) return;
+    const isPope=h.advClass==='Pope', isCult=h.advClass==='Cult Leader';
+    const healBase=isPope?(empowered?16:11):(empowered?12:8);
+    const healMult=(isPope && h.talents?.adv1)?1.08:1;
+    state.party.forEach(p=>{ if(p.alive){ p.hp=Math.min(heroMaxHp(p),p.hp+Math.ceil(healBase*healMult)); if(isPope) p.tempShield=(p.tempShield||0)+(empowered?5:3); } });
+    const mult=isCult?1.35:0.9;
+    dealDamageToEnemy(h,t,heroAtk(h)*mult*setMult); vfxAt(`e${state.enemies.indexOf(t)}`,'burst');
+    if(isCult){ alive(state.enemies).filter(x=>x!==t).slice(0,empowered?2:1).forEach(x=>{ dealDamageToEnemy(h,x,heroAtk(h)*0.55*setMult); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); }); h.hp=Math.min(heroMaxHp(h),h.hp+(empowered?8:5)); }
+    log(`✨ ${h.name} cast ${skillName(h)}${empowered?' (Empowered)':''}.`);
   }else{
     const t=pick(state.enemies); if(!t) return;
     const isWl=h.advClass==='Warlock', isSorc=h.advClass==='Sorcerer';
@@ -516,7 +534,7 @@ function heroAttack(a,b){
   let dmg=heroAtk(a);
   const critChance=heroCrit(a);
   if(Math.random()<critChance){
-    const critMult=(a.advClass==='Sniper'?2.1:1.75)*(1+(a.upCritDmg||0)+((a.talents?.adv2 && a.advClass==='Sniper')?0.15:0));
+    const critMult=(a.advClass==='Sniper'?2.1:1.75)*(1+(a.upCritDmg||0)+((a.talents?.adv2 && a.advClass==='Sniper')?0.15:0)+((a.talents?.adv1 && a.advClass==='Cult Leader')?0.1:0));
     dmg=Math.floor(dmg*critMult);
     log(`💥 ${a.name} crit!`); vfxAt(`e${state.enemies.indexOf(b)}`,'crit');
   }
@@ -554,8 +572,9 @@ function enemyAttack(c,d){
     if(absorbed>0) vfxAt(`p${state.party.indexOf(d)}`,'block');
   }
   const classDef=(d.talents?.adv2 && d.advClass==='Warden')?1:0;
+  const popeAura=state.party.some(p=>p.alive && p.advClass==='Pope' && p.talents?.adv3)?1:0;
   const teamDef=(state.partyTalents.ironWallLv||0);
-  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0)-classDef-teamDef);
+  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0)-classDef-popeAura-teamDef);
   if(dmg>0){
     const final=Math.max(1,dmg);
     d.hp-=final;
@@ -652,6 +671,7 @@ function gainXp(hero,amt){
 function advancedOptions(name){
   if(name==='Warrior') return ['Paladin','Berserker'];
   if(name==='Ranger') return ['Sniper','Warden'];
+  if(name==='Priest') return ['Pope','Cult Leader'];
   return ['Sorcerer','Warlock'];
 }
 function advTalentNames(cls){
@@ -661,7 +681,9 @@ function advTalentNames(cls){
     Sniper:['Sharpshot (+6% crit)','Headhunter (+15% crit dmg)','Pinpoint (+8% marked dmg)'],
     Warden:['Ironhide (+12% hp)','Aegis (+1 def)','Safeguard (stronger 2nd wind)'],
     Sorcerer:['Overcharge (+10% skill dmg)','Chainspark (+10% echo chance)','Timewarp (+1 CDR)'],
-    Warlock:['Soul Siphon (+6% leech)','Doom (+10% vs elites/boss)','Dark Pact (+8% atk)']
+    Warlock:['Soul Siphon (+6% leech)','Doom (+10% vs elites/boss)','Dark Pact (+8% atk)'],
+    Pope:['Divine Aegis (+8% team heal power)','Sacred Might (+8% atk)','Holy Ward (+1 def aura)'],
+    'Cult Leader':['Forbidden Rite (+10% crit dmg)','Dark Hymn (+8% atk)','Blood Sermon (+6% leech)']
   };
   return m[cls]||['—','—','—'];
 }
