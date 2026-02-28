@@ -1,11 +1,13 @@
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'>
-  <rect width='128' height='128' rx='16' fill='#2a1620'/>
+  <rect width='128' height='128' rx='16' fill='#2d1119'/>
+  <ellipse cx='64' cy='112' rx='30' ry='8' fill='#000' opacity='.25'/>
   <circle cx='64' cy='30' r='14' fill='#eeb894'/>
-  <rect x='46' y='44' width='36' height='36' rx='8' fill='#7b3f4f'/>
-  <rect x='40' y='50' width='10' height='26' rx='5' fill='#9a5566'/>
-  <rect x='78' y='50' width='10' height='26' rx='5' fill='#9a5566'/>
-  <rect x='52' y='80' width='10' height='26' rx='4' fill='#693545'/>
-  <rect x='66' y='80' width='10' height='26' rx='4' fill='#693545'/>
-  <path d='M92 40l10 8-18 26-8-6z' fill='#ffb4b4'/>
-  <path d='M52 22l6-8 6 8M70 22l6-8 6 8' stroke='#f06b6b' stroke-width='4' stroke-linecap='round'/>
+  <path d='M44 46h40v34a10 10 0 0 1-10 10H54a10 10 0 0 1-10-10z' fill='#8d3a4d'/>
+  <rect x='50' y='84' width='10' height='22' rx='4' fill='#6c2a3a'/>
+  <rect x='68' y='84' width='10' height='22' rx='4' fill='#6c2a3a'/>
+  <path d='M18 78l22-36 8 5-16 40z' fill='#ff8c8c'/>
+  <path d='M110 78l-22-36-8 5 16 40z' fill='#ff8c8c'/>
+  <path d='M50 22l6-10 6 10M66 22l6-10 6 10' stroke='#ff6767' stroke-width='4' stroke-linecap='round'/>
+  <circle cx='42' cy='38' r='3' fill='#ff9fae'/>
+  <circle cx='86' cy='38' r='3' fill='#ff9fae'/>
 </svg>
