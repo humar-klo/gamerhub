@@ -28,15 +28,25 @@ function heroTemplate(cls){
   return mkHero('Mage','assets/mage-human.svg',52,15,'burst');
 }
 
-function unlockNextHero(){
+function openHeroUnlockChoice(){
   if(state.unlockedSlots>=3) return;
   const pool=['Warrior','Ranger','Mage'];
   const owned=new Set(state.party.map(h=>h.name));
-  const pickClass=pool.find(c=>!owned.has(c))||pool[state.unlockedSlots%pool.length];
-  state.party.push(heroTemplate(pickClass));
+  const choices=pool.filter(c=>!owned.has(c));
+  const wrap=$('heroUnlockChoices');
+  wrap.innerHTML=choices.map(c=>`<button data-unlock-hero='${c}'>${c}</button>`).join('');
+  $('heroUnlockModal').classList.remove('hidden');
+}
+
+function unlockHeroByChoice(heroClass){
+  if(state.unlockedSlots>=3) return;
+  state.party.push(heroTemplate(heroClass));
   state.unlockedSlots=state.party.length;
   state.nextHeroUnlockWave=state.unlockedSlots===2?50:null;
-  log(`🧭 Reinforcement joined: ${pickClass}! Party slots: ${state.unlockedSlots}/3`);
+  $('heroUnlockModal').classList.add('hidden');
+  log(`🧭 Reinforcement joined: ${heroClass}! Party slots: ${state.unlockedSlots}/3`);
+  save();
+  draw();
 }
 
 function mkEnemy(i,w,boss=false){
@@ -500,7 +510,7 @@ function gainXp(hero,amt){
   while(hero.xp>=xpToNext(hero)){
     hero.xp-=xpToNext(hero); hero.lvl++; hero.maxHp+=6; hero.atk+=2; hero.hp=Math.min(heroMaxHp(hero),hero.hp+8);
     log(`🌟 ${hero.name} reached Lv ${hero.lvl}`);
-    if(hero.lvl%3===0) state.talentPts++;
+    if(hero.lvl%3===0) state.talentPts+=2;
   }
 }
 function advancedOptions(name){
@@ -550,11 +560,19 @@ function endWave(){
   if(p>0&&e===0){
     const firstClear=state.wave>state.highestWave;
     if(firstClear){
-      const reward=12+state.wave*5; state.gold+=reward; state.highestWave=state.wave; state.talentPts += state.wave%5===0?1:0;
+      const reward=12+state.wave*5; state.gold+=reward; state.highestWave=state.wave; state.talentPts += state.wave%5===0?3:0;
       state.stats.wavesCleared=(state.stats.wavesCleared||0)+1;
       state.stats.lastWaveMs=Date.now()-(state.stats.waveStartTs||Date.now());
       log(`✅ First clear Wave ${state.wave}! +${reward}g in ${(state.stats.lastWaveMs/1000).toFixed(1)}s`);
-      while(state.nextHeroUnlockWave && state.highestWave>=state.nextHeroUnlockWave){ unlockNextHero(); }
+      while(state.nextHeroUnlockWave && state.highestWave>=state.nextHeroUnlockWave){
+        openHeroUnlockChoice();
+        state.nextHeroUnlockWave=null;
+      }
+      if(!$('heroUnlockModal').classList.contains('hidden')){
+        save();
+        draw();
+        return;
+      }
       if(state.mode==='push') state.wave=state.highestWave+1;
     }else{
       log(`♻️ Wave ${state.wave} replay cleared. Respawning for grind.`);
@@ -675,6 +693,12 @@ $('buyAmt5').onclick=()=>{ state.shopBuyAmount=5; draw(); };
 $('buyAmt10').onclick=()=>{ state.shopBuyAmount=10; draw(); };
 $('buyAmtMAX').onclick=()=>{ state.shopBuyAmount='max'; draw(); };
 
+$('heroUnlockChoices').onclick=(ev)=>{
+  const b=ev.target.closest('button[data-unlock-hero]');
+  if(!b) return;
+  unlockHeroByChoice(b.dataset.unlockHero);
+};
+
 $('party').onclick=(ev)=>{
   const btn=ev.target.closest('button[data-class]'); if(!btn) return;
   const i=Number(btn.dataset.i), h=state.party[i]; if(!h||h.advClass) return;
@@ -750,5 +774,5 @@ if(!hasSave){
   };
 }else{
   draw();
-  log('v1.2 ready. New game flow, party unlock waves (20/50), expanded talents, and bulk shop upgrades.');
+  log('v1.3 ready. Hero unlock choice popups, progression tuning, expanded talents, and bulk shop upgrades.');
 }
