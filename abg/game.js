@@ -439,7 +439,10 @@ function mkItem(w){
   const atk=Math.max(0,Math.round((1+Math.random()*2+ilvl*0.07)*mult));
   const hp=Math.max(2,Math.round((4+Math.random()*7+ilvl*0.35)*mult));
   const crit=(slot.includes('ring')||slot==='amulet')? Number((0.01*mult).toFixed(3)) : 0;
-  const set=SETS[(slot.length + ilvl + Math.floor(Math.random()*5))%SETS.length];
+  // Set items only appear on Mythic (purple) and Legendary tiers.
+  const set=(rarity==='Mythic' || rarity==='Legendary')
+    ? SETS[(slot.length + ilvl + Math.floor(Math.random()*5))%SETS.length]
+    : null;
   return {name:`${rarity} ${slot} i${ilvl}`,rarity,slot,atk,hp,crit,set,scrap:Math.round(3*mult + w*0.5)};
 }
 function maybeDropItem(enemy){
