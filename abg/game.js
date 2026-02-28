@@ -16,7 +16,7 @@ const state={
   unlockedSlots:1,
   nextHeroUnlockWave:20,
   pendingHeroUnlock:false,
-  enemies:[],equipHeroIdx:0,shopBuyAmount:1
+  enemies:[],equipHeroIdx:0,shopBuyAmount:1,showTotalStats:true
 };
 
 function mkHero(name,icon,hp,atk,skill){
@@ -330,6 +330,8 @@ function draw(){
   $('talAtkPct').textContent=`Might Training (+5/10/15/20/25%) [${state.talents.atkPctLv||0}/5] (5 pt)`;
   $('talHpPct').textContent=`Fortitude Training (+5/10/15/20/25%) [${state.talents.hpPctLv||0}/5] (5 pt)`;
   $('shopBalanceInfo').innerHTML=`Shop scaling: Heal +4/lv • Revive +6/lv • ATK/HP +9/lv • Crit +10/lv • CritDmg +12/lv • Def +10/lv`;
+  $('toggleTotalStatsBtn').textContent=state.showTotalStats?'Hide':'Show';
+  $('totalStatsWrap').classList.toggle('hidden',!state.showTotalStats);
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
   drawReviveTargets(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats(); drawTotalStats();
@@ -658,8 +660,7 @@ function endWave(){
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
-$('statsBtn').onclick=()=>{ drawTotalStats(); $('totalStatsModal').classList.remove('hidden'); };
-$('closeStatsBtn').onclick=()=>{ $('totalStatsModal').classList.add('hidden'); };
+$('toggleTotalStatsBtn').onclick=()=>{ state.showTotalStats=!state.showTotalStats; draw(); save(); };
 $('modeBtn').onclick=()=>{ 
   state.mode=state.mode==='push'?'grind':'push';
   if(!state.running){ state.enemies=[]; state.bossPending=false; }
@@ -791,6 +792,7 @@ function normalizeLoadedState(){
   if(state.teamBuffDef==null) state.teamBuffDef=0;
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
+  if(state.showTotalStats==null) state.showTotalStats=true;
   if(!state.mode) state.mode='push';
   if(state.combo==null) state.combo=0;
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
@@ -814,6 +816,7 @@ function startNewGame(playerName,startClass){
   state.unlockedSlots=1;
   state.nextHeroUnlockWave=20;
   state.pendingHeroUnlock=false;
+  state.showTotalStats=true;
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};

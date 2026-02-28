@@ -3,6 +3,10 @@ body{margin:0;font-family:Inter,system-ui;background:#090d1a;color:#e8edff}
 h1{margin:.2rem 0}
 .topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:linear-gradient(180deg,#141c35,#10162a);border:1px solid #2a355f;padding:10px;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
 .topbar>div{background:rgba(255,255,255,.03);border:1px solid rgba(133,159,255,.2);padding:5px 8px;border-radius:8px}
+.collapsible{margin-top:12px}
+.collapsible-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.collapsible-head h2{margin:.2rem 0}
+#totalStatsWrap.hidden{display:none}
 #comboLabel{color:#ffd27a;text-shadow:0 0 10px rgba(255,192,96,.35)}
 button{background:#5d6dff;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
 button:hover{opacity:.92}
