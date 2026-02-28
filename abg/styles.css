@@ -22,7 +22,10 @@ button.danger{background:#a6425c}
 .sprite img{width:100%;height:100%;object-fit:cover}
 .sprite.enemy{background:#3a1f2b;border-color:#7b3a52}
 .sprite.hit{animation:hit .16s ease}
+.sprite.target{outline:2px solid #7af7e7;outline-offset:2px;box-shadow:0 0 0 3px rgba(122,247,231,.25)}
+.sprite.boss-warn{animation:warn .45s ease 2}
 .fx{position:absolute;inset:12px;border-radius:999px;pointer-events:none}
+.float{position:absolute;left:50%;top:6px;transform:translateX(-50%);font-weight:800;font-size:.82rem;color:#ffd9d9;text-shadow:0 2px 6px rgba(0,0,0,.7);pointer-events:none;animation:floatUp .5s ease forwards}
 .fx.slash{border:3px solid rgba(255,255,255,.75);transform:rotate(-25deg);animation:fxSlash .24s ease}
 .fx.crit{background:radial-gradient(circle,rgba(255,230,120,.9),rgba(255,230,120,0));animation:fxPop .24s ease}
 .fx.burst{background:radial-gradient(circle,rgba(132,228,255,.9),rgba(132,228,255,0));animation:fxPop .24s ease}
@@ -30,8 +33,10 @@ button.danger{background:#a6425c}
 .fx.hitfx{background:radial-gradient(circle,rgba(255,120,120,.85),rgba(255,120,120,0));animation:fxPop .24s ease}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes hit{0%{transform:translateX(0)}50%{transform:translateX(6px) scale(1.04)}100%{transform:translateX(0)}}
+@keyframes warn{0%,100%{filter:brightness(1)}50%{filter:brightness(1.85) saturate(1.15)}}
 @keyframes fxSlash{0%{opacity:0;transform:scale(.4) rotate(-25deg)}30%{opacity:1}100%{opacity:0;transform:scale(1.2) rotate(-25deg)}}
 @keyframes fxPop{0%{opacity:0;transform:scale(.3)}40%{opacity:1}100%{opacity:0;transform:scale(1.25)}}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,6px)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px)}}
 .mini-ico{width:16px;height:16px;vertical-align:-2px;border-radius:4px;margin-right:6px}
 #party,#enemies{min-height:280px;max-height:280px;overflow:auto;padding-right:4px}
 .unit{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid #273258;padding:7px 0}

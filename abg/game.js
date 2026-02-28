@@ -94,6 +94,8 @@ function dealDamageToEnemy(attacker,enemy,raw){
   dmg=Math.max(1,dmg-enemyArmor(enemy));
   enemy.hp-=dmg;
   state.stats.dmgDealt=(state.stats.dmgDealt||0)+dmg;
+  const eid=state.enemies.indexOf(enemy);
+  if(eid>=0) floatText(`e${eid}`,`-${dmg}`);
   if(attacker.setLeech>0) attacker.hp=Math.min(heroMaxHp(attacker),attacker.hp+Math.ceil(dmg*attacker.setLeech));
   if(enemy.hp<=0&&enemy.alive){ enemy.alive=false; onEnemyKilled(enemy,attacker); }
   return dmg;
@@ -242,10 +244,24 @@ function spawnWave(w=state.wave){
   state.stats.waveStartTs=Date.now();
   state.party.forEach(h=>h.secondWindUsed=false);
 }
-function startWave(){ if(state.running) return; if(!state.enemies.length) spawnWave(); state.running=true; state.paused=false; draw(); loop(); }
+function startWave(){
+  if(state.running) return;
+  const liveEnemies=alive(state.enemies).length;
+  if(!state.enemies.length || liveEnemies===0){
+    state.enemies=[];
+    spawnWave(state.wave);
+  }
+  state.running=true;
+  state.paused=false;
+  draw();
+  loop();
+}
 function loop(){ clearInterval(state.tick); state.tick=setInterval(()=>{ if(!state.paused) step(); }, Math.max(130,540/state.speed)); }
 
 function flash(id){const el=$(id); if(!el) return; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');}
+function markTarget(id){ const el=$(id); if(!el) return; el.classList.add('target'); setTimeout(()=>el.classList.remove('target'),220); }
+function bossWarn(id){ const el=$(id); if(!el) return; el.classList.add('boss-warn'); setTimeout(()=>el.classList.remove('boss-warn'),500); }
+function floatText(id,text){ const el=$(id); if(!el) return; const f=document.createElement('span'); f.className='float'; f.textContent=text; el.appendChild(f); setTimeout(()=>f.remove(),520); }
 function vfxAt(id,kind='slash'){ const el=$(id); if(!el) return; const fx=document.createElement('span'); fx.className=`fx ${kind}`; el.appendChild(fx); setTimeout(()=>fx.remove(),240); }
 function gainFocus(h,amount){ h.focus=clamp((h.focus||0)+amount,0,100); }
 
@@ -311,6 +327,7 @@ function heroAttack(a,b){
   if(a.cd>0) a.cd--;
 }
 function enemyAttack(c,d){
+  if(c.boss) bossWarn(`e${state.enemies.indexOf(c)}`);
   if(c.healer && Math.random()<0.22){
     const ally=alive(state.enemies).sort((x,y)=>(x.hp/x.maxHp)-(y.hp/y.maxHp))[0];
     if(ally && ally.hp<ally.maxHp){
@@ -331,6 +348,8 @@ function enemyAttack(c,d){
     const final=Math.max(1,dmg);
     d.hp-=final;
     state.stats.dmgTaken=(state.stats.dmgTaken||0)+final;
+    const pid=state.party.indexOf(d);
+    if(pid>=0) floatText(`p${pid}`,`-${final}`);
   }
   vfxAt(`p${state.party.indexOf(d)}`,'hitfx');
   if(c.affix==='Vampiric' && dmg>0){ c.hp=Math.min(c.maxHp,c.hp+Math.ceil(dmg*0.2)); }
@@ -342,13 +361,29 @@ function enemyAttack(c,d){
   }
 }
 function step(){
-  const p=alive(state.party), e=alive(state.enemies); if(!p.length||!e.length) return endWave();
-  const a=pick(p), b=pickEnemyTarget()||pick(e); heroAttack(a,b); flash(`e${state.enemies.indexOf(b)}`);
-  const e2=alive(state.enemies); if(!e2.length) return endWave();
-  const c=pick(e2), d=pickHeroTarget()||pick(p); enemyAttack(c,d); flash(`p${state.party.indexOf(d)}`);
+  // Defensive cleanup: if a stale enemy object lingers (dead/invalid), normalize before resolving actions.
+  state.enemies = state.enemies.filter(x => x && Number.isFinite(x.hp));
+  const p=alive(state.party), e=alive(state.enemies);
+  if(!p.length||!e.length) return endWave();
+
+  const a=pick(p), b=pickEnemyTarget()||pick(e);
+  if(!b || !b.alive) return endWave();
+  markTarget(`e${state.enemies.indexOf(b)}`);
+  heroAttack(a,b); flash(`e${state.enemies.indexOf(b)}`);
+
+  const e2=alive(state.enemies);
+  if(!e2.length) return endWave();
+
+  const c=pick(e2), d=pickHeroTarget()||pick(p);
+  if(!c || !d) return endWave();
+  markTarget(`p${state.party.indexOf(d)}`);
+  enemyAttack(c,d); flash(`p${state.party.indexOf(d)}`);
+
   if(c.alive && c.haste>0 && Math.random()<c.haste){
-    const d2=pickHeroTarget()||pick(alive(state.party)); if(d2){ enemyAttack(c,d2); flash(`p${state.party.indexOf(d2)}`); }
+    const d2=pickHeroTarget()||pick(alive(state.party));
+    if(d2){ enemyAttack(c,d2); flash(`p${state.party.indexOf(d2)}`); }
   }
+
   state.party.forEach(h=>{
     if(h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1-(h.setCdr||0));
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
@@ -427,23 +462,39 @@ function endWave(){
   }
   if(p===0){
     const penalty=state.wave*5; state.gold=Math.max(0,state.gold-penalty);
-    state.wave=Math.max(1,state.highestWave||1);
-    log(`💀 Party wiped. -${penalty}g. Sent to infinite Wave ${state.wave} grind.`);
-    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.focus=0;});
-    state.enemies=[]; save(); draw();
-    if(state.autoMode){ spawnWave(state.wave); startWave(); }
+    // Hard switch to grind after wipe to prevent push-mode deadlocks on failed progression.
+    state.mode='grind';
+    state.wave=Math.max(1,state.highestWave||state.wave||1);
+    state.combo=0;
+    state.waveAtkStack=0;
+    state.bossPending=false;
+    log(`💀 Party wiped. -${penalty}g. Switched to GRIND at Wave ${state.wave}.`);
+    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.focus=0;h.secondWindUsed=false;});
+    state.enemies=[];
+    save();
+    draw();
+    if(state.autoMode){
+      spawnWave(state.wave);
+      startWave();
+    }
     return;
   }
   save(); draw();
 }
 
-$('startBtn').onclick=()=>startWave();
+$('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
-$('modeBtn').onclick=()=>{ state.mode=state.mode==='push'?'grind':'push'; log(`Mode changed to ${state.mode.toUpperCase()}.`); save(); draw(); };
+$('modeBtn').onclick=()=>{ 
+  state.mode=state.mode==='push'?'grind':'push';
+  if(!state.running){ state.enemies=[]; state.bossPending=false; }
+  log(`Mode changed to ${state.mode.toUpperCase()}.`); 
+  save(); 
+  draw(); 
+};
 $('resetBtn').onclick=()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); };
-$('prevWaveBtn').onclick=()=>{ if(state.running) return; state.wave=Math.max(1,state.wave-1); draw(); };
-$('nextWaveBtn').onclick=()=>{ if(state.running) return; state.wave=Math.min(state.highestWave+1,state.wave+1); draw(); };
+$('prevWaveBtn').onclick=()=>{ if(state.running) return; state.wave=Math.max(1,state.wave-1); state.enemies=[]; state.bossPending=false; draw(); };
+$('nextWaveBtn').onclick=()=>{ if(state.running) return; state.wave=Math.min(state.highestWave+1,state.wave+1); state.enemies=[]; state.bossPending=false; draw(); };
 
 $('healBtn').onclick=()=>{ const c=healCost(); if(state.gold<c) return; state.gold-=c; state.shopHealLv++; state.party.forEach(h=>{if(h.alive)h.hp=Math.min(heroMaxHp(h),h.hp+28)}); log(`Party healed (-${c}g).`); save(); draw(); };
 $('reviveBtn').onclick=()=>{ const anyKo=state.party.some(h=>!h.alive||h.hp<=0); if(!anyKo){ log('No KO ally to revive.'); return; } log(`Choose a KO ally below Revive (${reviveCost()}g).`); draw(); };

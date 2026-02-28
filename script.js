@@ -40,6 +40,7 @@ function switchTab(tabName) {
     const active = btn.dataset.tab === tabName;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    btn.tabIndex = active ? 0 : -1;
   });
 
   Object.entries(tabPanels).forEach(([key, panel]) => {
@@ -54,7 +55,33 @@ function switchTab(tabName) {
   }
 }
 
-tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+const tabOrder = Array.from(tabButtons);
+tabOrder.forEach((btn) => {
+  const key = btn.dataset.tab;
+  btn.id = `tab-${key}`;
+  btn.setAttribute('aria-controls', `panel-${key}`);
+
+  const panel = tabPanels[key];
+  if (panel) panel.setAttribute('aria-labelledby', btn.id);
+
+  btn.addEventListener('click', () => switchTab(key));
+  btn.addEventListener('keydown', (e) => {
+    const current = tabOrder.indexOf(btn);
+    if (current < 0) return;
+
+    let next = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (current + 1) % tabOrder.length;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (current - 1 + tabOrder.length) % tabOrder.length;
+    if (e.key === 'Home') next = 0;
+    if (e.key === 'End') next = tabOrder.length - 1;
+
+    if (next !== null) {
+      e.preventDefault();
+      switchTab(tabOrder[next].dataset.tab);
+      tabOrder[next].focus();
+    }
+  });
+});
 
 if (selectorToggle && selectorPanel) {
   const toggleSelector = () => {
@@ -460,6 +487,9 @@ function renderDynamicFaqs() {
 }
 
 renderDynamicFaqs();
+
+const initialActiveTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'nms';
+switchTab(initialActiveTab);
 
 // Maintainer note: every game should keep exactly 30 entries (10 early, 10 mid, 10 end)
 // so stage blocks stay structurally consistent across tabs.
