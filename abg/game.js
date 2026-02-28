@@ -244,7 +244,7 @@ function drawList(id,arr,isParty=true){
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
         ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)}/${heroManaMax(u)}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.weakenTurns>0?` • Weakened ${u.weakenTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
-      ${isParty?`<div class='mini-actions party-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents (${u.talentPts||0})</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
+      ${isParty?`<div class='mini-actions party-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents (${u.talentPts||0})</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length||(u.mana||0)<BASE_SKILL_MANA)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
     </div>`).join('');
 }
@@ -347,18 +347,19 @@ function skillName(h){
   return 'Arcane Nova';
 }
 function skillTooltip(h){
-  if(h.advClass==='Paladin') return 'Guardian Oath: Team shield + team heal (5, empowered 8). CD 8. Empowered at 50 mana.';
-  if(h.advClass==='Berserker') return 'Rage Slam: Team shield + single heavy strike (125% ATK). CD 8. Empowered at 50 mana.';
-  if(h.advClass==='Sniper') return 'Deadeye Volley: Hits all enemies, applies mark amp 32% (+8% with Pinpoint). CD 8.';
-  if(h.advClass==='Warden') return 'Thorn Volley: Hits all enemies, applies marks, grants team shield (3, empowered 5). CD 8.';
-  if(h.advClass==='Sorcerer') return 'Tempest Nova: Main hit + chain splash (1/2 extra targets). CD 8. Skill scaling boosted by Overcharge.';
-  if(h.advClass==='Warlock') return 'Soul Drain: Heavy single-target spell, self-heal 10 (empowered 16). CD 8.';
-  if(h.advClass==='Pope') return 'Sacred Decree: Heavy team heal, stronger shields, and mana restore. CD 8. Empowered cast amplifies healing.';
-  if(h.advClass==='Cult Leader') return 'Ritual of Ruin: Multi-target damage pulse, applies Weaken debuff, and self-heals. CD 8.';
-  if(h.name==='Warrior') return 'Guardian Cry: Team shield skill. CD 8. Empowered at 50 mana.';
-  if(h.name==='Ranger') return 'Volley: Multi-target ranged strike with mark setup. CD 8.';
-  if(h.name==='Priest') return 'Prayer Wave: Team heal plus light holy damage. CD 8.';
-  return 'Arcane Nova: Spell burst attack. CD 8.';
+  const cost='Costs 30 mana (50 empowered).';
+  if(h.advClass==='Paladin') return `Guardian Oath: Team shield + team heal (5, empowered 8). CD 8. ${cost}`;
+  if(h.advClass==='Berserker') return `Rage Slam: Team shield + single heavy strike (125% ATK). CD 8. ${cost}`;
+  if(h.advClass==='Sniper') return `Deadeye Volley: Hits all enemies, applies mark amp 32% (+8% with Pinpoint). CD 8. ${cost}`;
+  if(h.advClass==='Warden') return `Thorn Volley: Hits all enemies, applies marks, grants team shield (3, empowered 5). CD 8. ${cost}`;
+  if(h.advClass==='Sorcerer') return `Tempest Nova: Main hit + chain splash (1/2 extra targets). CD 8. ${cost}`;
+  if(h.advClass==='Warlock') return `Soul Drain: Heavy single-target spell, self-heal 10 (empowered 16). CD 8. ${cost}`;
+  if(h.advClass==='Pope') return `Sacred Decree: Heavy team heal, stronger shields, and mana restore. CD 8. ${cost}`;
+  if(h.advClass==='Cult Leader') return `Ritual of Ruin: Multi-target damage pulse, applies Weaken debuff, and self-heals. CD 8. ${cost}`;
+  if(h.name==='Warrior') return `Guardian Cry: Team shield skill. CD 8. ${cost}`;
+  if(h.name==='Ranger') return `Volley: Multi-target ranged strike with mark setup. CD 8. ${cost}`;
+  if(h.name==='Priest') return `Prayer Wave: Team heal plus light holy damage. CD 8. ${cost}`;
+  return `Arcane Nova: Spell burst attack. CD 8. ${cost}`;
 }
 function slotText(it){
   return it?`${it.name} (+${it.atk} ATK / +${it.hp} HP${it.crit?` / +${Math.round(it.crit*100)}% crit`:''})`:'— empty —';
@@ -520,7 +521,14 @@ function markTarget(id){ const el=$(id); if(!el) return; el.classList.add('targe
 function bossWarn(id){ const el=$(id); if(!el) return; el.classList.add('boss-warn'); setTimeout(()=>el.classList.remove('boss-warn'),500); }
 function floatText(id,text){ const el=$(id); if(!el) return; const f=document.createElement('span'); f.className='float'; f.textContent=text; el.appendChild(f); setTimeout(()=>f.remove(),520); }
 function vfxAt(id,kind='slash'){ const el=$(id); if(!el) return; const fx=document.createElement('span'); fx.className=`fx ${kind}`; el.appendChild(fx); setTimeout(()=>fx.remove(),240); }
+const BASE_SKILL_MANA=30;
+const EMPOWERED_SKILL_MANA=50;
 function gainMana(h,amount){ h.mana=clamp((h.mana||0)+amount,0,heroManaMax(h)); }
+function spendMana(h,amount){
+  if((h.mana||0)<amount) return false;
+  h.mana-=amount;
+  return true;
+}
 
 function onEnemyKilled(enemy,killer){
   state.stats.waveKills=(state.stats.waveKills||0)+1;
@@ -528,7 +536,7 @@ function onEnemyKilled(enemy,killer){
   const goldGain=Math.max(1,Math.round(enemy.gold*partyGoldMult));
   state.gold+=goldGain; state.wins++; log(`💰 ${enemy.name} dropped ${goldGain}g`);
   gainXp(killer,enemy.xp);
-  gainMana(killer,12);
+  gainMana(killer,15);
   if(killer.talents?.bloodlust){ state.waveAtkStack=Math.min(10,state.waveAtkStack+1); }
   if(killer.talents?.battleRhythm){ state.party.forEach(h=>{ if(h.alive&&h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1); }); }
   maybeDropItem(enemy);
@@ -536,9 +544,10 @@ function onEnemyKilled(enemy,killer){
 
 function castHeroSkill(i){
   const h=state.party[i];
-  if(!h||!h.alive||h.abilityCd>0||!alive(state.enemies).length) return;
-  const empowered=(h.mana||0)>=50;
-  if(empowered) h.mana=Math.max(0,h.mana-50);
+  if(!h||!h.alive||h.abilityCd>0||!alive(state.enemies).length) return false;
+  const empowered=(h.mana||0)>=EMPOWERED_SKILL_MANA;
+  const skillCost=empowered?EMPOWERED_SKILL_MANA:BASE_SKILL_MANA;
+  if(!spendMana(h,skillCost)) return false;
   const setMult=1+(h.setSkillMult||0)+(empowered?0.2:0)+((h.talents?.adv1 && h.advClass==='Sorcerer')?0.1:0);
   if(h.name==='Warrior'){
     const isB=h.advClass==='Berserker';
@@ -581,6 +590,7 @@ function castHeroSkill(i){
   }
   h.abilityCd=8;
   draw();
+  return true;
 }
 
 function heroAttack(a,b){
@@ -595,7 +605,7 @@ function heroAttack(a,b){
     const targets=alive(state.enemies).slice(0,a.advClass==='Sorcerer'?3:2);
     targets.forEach(x=>{ dealDamageToEnemy(a,x,dmg*0.72); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); });
     a.cd=4;
-    gainMana(a,10);
+    gainMana(a,12);
     return;
   }
   dealDamageToEnemy(a,b,dmg); vfxAt(`e${state.enemies.indexOf(b)}`,'slash');
@@ -608,9 +618,27 @@ function heroAttack(a,b){
   }
   if(a.advClass==='Paladin'){ const t=alive(state.party).sort((x,y)=>x.hp/heroMaxHp(x)-y.hp/heroMaxHp(y))[0]; if(t){ t.hp=Math.min(heroMaxHp(t),t.hp+4); } if(a.talents?.adv3){ a.hp=Math.min(heroMaxHp(a),a.hp+2); } }
   if(a.advClass==='Warlock'){ a.hp=Math.min(heroMaxHp(a),a.hp+2); }
+
+  // Passive mana spenders by archetype to make mana economy meaningful beyond active skills.
+  if((a.name==='Warrior' || a.advClass==='Paladin' || a.advClass==='Berserker') && spendMana(a,10)){
+    a.tempShield=(a.tempShield||0)+4;
+  }
+  if((a.name==='Ranger' || a.advClass==='Sniper' || a.advClass==='Warden') && b.alive && spendMana(a,10)){
+    dealDamageToEnemy(a,b,heroAtk(a)*0.3); vfxAt(`e${state.enemies.indexOf(b)}`,'crit');
+  }
+  if((a.name==='Mage' || a.advClass==='Sorcerer' || a.advClass==='Warlock') && spendMana(a,15)){
+    const spl=alive(state.enemies).filter(x=>x!==b).slice(0,1);
+    spl.forEach(x=>{ dealDamageToEnemy(a,x,heroAtk(a)*0.45); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); });
+  }
+  if((a.name==='Priest' || a.advClass==='Pope' || a.advClass==='Cult Leader') && spendMana(a,12)){
+    const ally=alive(state.party).sort((x,y)=>x.hp/heroMaxHp(x)-y.hp/heroMaxHp(y))[0];
+    if(ally) ally.hp=Math.min(heroMaxHp(ally),ally.hp+4);
+    if(a.advClass==='Cult Leader' && b.alive) b.weakenTurns=Math.max(b.weakenTurns||0,1);
+  }
+
   const echoChance=(a.talents?.echo?0.15:0) + ((a.talents?.adv2 && a.advClass==='Sorcerer')?0.1:0);
   if(echoChance>0 && Math.random()<echoChance && b.alive){ dealDamageToEnemy(a,b,dmg*0.4); vfxAt(`e${state.enemies.indexOf(b)}`,'burst'); }
-  gainMana(a,8);
+  gainMana(a,10);
   if(a.cd>0) a.cd--;
 }
 function enemyAttack(c,d){
@@ -645,7 +673,7 @@ function enemyAttack(c,d){
   vfxAt(`p${state.party.indexOf(d)}`,'hitfx');
   if(c.affix==='Vampiric' && dmg>0){ c.hp=Math.min(c.maxHp,c.hp+Math.ceil(dmg*0.2)); }
   if(c.affix==='Bastion' && Math.random()<0.15){ c.hp=Math.min(c.maxHp,c.hp+2); }
-  gainMana(d,6);
+  gainMana(d,7);
   if(d.hp<=0&&d.alive){
     if(d.talents?.secondWind && !d.secondWindUsed){ d.secondWindUsed=true; const ratio=(d.talents?.adv3 && d.advClass==='Warden')?0.45:0.3; d.hp=Math.ceil(heroMaxHp(d)*ratio); log(`🪽 ${d.name} triggered Second Wind!`); return; }
     d.alive=false; log(`${c.name} downed ${d.name}.`);
@@ -662,7 +690,7 @@ function step(){
   if(!p.length||!e.length) return endWave();
 
   if(state.autoSkillCast){
-    const ready=state.party.map((h,i)=>({h,i})).filter(x=>x.h.alive && x.h.abilityCd<=0 && alive(state.enemies).length>0);
+    const ready=state.party.map((h,i)=>({h,i})).filter(x=>x.h.alive && x.h.abilityCd<=0 && (x.h.mana||0)>=BASE_SKILL_MANA && alive(state.enemies).length>0);
     if(ready.length){
       ready.sort((a,b)=>(b.h.mana||0)-(a.h.mana||0));
       castHeroSkill(ready[0].i);
@@ -826,7 +854,7 @@ function endWave(){
       log(`♻️ Wave ${state.wave} replay cleared. Respawning for grind.`);
     }
     const postWaveHeal=0.2 + (state.partyTalents.battleMedicLv||0)*0.03;
-    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal)); h.cd=0; h.mana=Math.max(0,(h.mana||0)-20);});
+    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal)); h.cd=0; h.mana=Math.max(0,(h.mana||0)-12);});
     state.enemies=[]; save(); draw();
     if(state.autoMode){
       // In grind mode, stay on the currently selected wave (do not snap backward unexpectedly).
