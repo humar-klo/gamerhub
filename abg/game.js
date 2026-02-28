@@ -251,20 +251,20 @@ function drawUpgradeUI(){
   if(!h) return;
   const left=[
     ['Hero',`${h.name} • Level: ${h.lvl}`],
+    ['HP rank',`${h.upHpLv||0}`],
+    ['Def rank',`${h.upDefLv||0}`],
+    ['Mana rank',`${h.upManaLv||0}`],
+    ['ATK rank',`${h.upAtkLv||0}`],
+    ['Crit rank',`${h.upCritLv||0}`],
+    ['CritDmg rank',`${h.upCritDmgLv||0}`]
+  ];
+  const right=[
     ['Total Max HP',`${heroMaxHp(h)}`],
     ['Total Defense',`${h.upDef||0}`],
     ['Mana',`${Math.floor(h.mana||0)}/${heroManaMax(h)}`],
-    ['HP rank',`${h.upHpLv||0}`],
-    ['Mana rank',`${h.upManaLv||0}`],
-    ['Def rank',`${h.upDefLv||0}`]
-  ];
-  const right=[
     ['Total ATK',`${heroAtk(h)}`],
     ['Total Crit',`${(heroCrit(h)*100).toFixed(1)}%`],
     ['Total Crit Dmg Bonus',`${Math.round((h.upCritDmg||0)*100)}%`],
-    ['ATK rank',`${h.upAtkLv||0}`],
-    ['Crit rank',`${h.upCritLv||0}`],
-    ['CritDmg rank',`${h.upCritDmgLv||0}`],
     ['ATK/HP breakdown',`${h.atk}+${h.upAtk||0}+${h.gearAtk||0} / ${h.maxHp}+${h.upHp||0}+${h.gearHp||0}`]
   ];
   $('upgradeInfo').innerHTML=`<div class='upgrade-split'><div class='upgrade-col'>${left.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div><div class='upgrade-col'>${right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
