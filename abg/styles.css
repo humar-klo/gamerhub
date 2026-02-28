@@ -47,6 +47,7 @@ input,select{background:#0b1020;color:#e8edff;border:1px solid #2a355f;padding:8
 #party,#enemies{min-height:280px;max-height:280px;overflow:auto;padding-right:4px}
 .unit{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid #273258;padding:7px 0}
 .unit .name{font-weight:600}
+.unit small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hpbar{height:7px;background:#1a2140;border-radius:999px;overflow:hidden;border:1px solid #2e3a6c;margin-top:4px}
 .hpbar>span{display:block;height:100%;background:linear-gradient(90deg,#35d07f,#85f7b4)}
 .dead{opacity:.42}
