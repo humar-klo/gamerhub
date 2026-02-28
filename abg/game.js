@@ -15,6 +15,7 @@ const state={
   party:[mkHero('Warrior','assets/warrior-human.svg',78,11,'block')],
   unlockedSlots:1,
   nextHeroUnlockWave:20,
+  pendingHeroUnlock:false,
   enemies:[],equipHeroIdx:0,shopBuyAmount:1
 };
 
@@ -34,7 +35,9 @@ function openHeroUnlockChoice(){
   const owned=new Set(state.party.map(h=>h.name));
   const choices=pool.filter(c=>!owned.has(c));
   const wrap=$('heroUnlockChoices');
+  state.pendingHeroUnlock=true;
   wrap.innerHTML=choices.map(c=>`<button data-unlock-hero='${c}'>${c}</button>`).join('');
+  $('heroUnlockContinueBtn').disabled=true;
   $('heroUnlockModal').classList.remove('hidden');
 }
 
@@ -43,7 +46,8 @@ function unlockHeroByChoice(heroClass){
   state.party.push(heroTemplate(heroClass));
   state.unlockedSlots=state.party.length;
   state.nextHeroUnlockWave=state.unlockedSlots===2?50:null;
-  $('heroUnlockModal').classList.add('hidden');
+  state.pendingHeroUnlock=false;
+  $('heroUnlockContinueBtn').disabled=false;
   log(`🧭 Reinforcement joined: ${heroClass}! Party slots: ${state.unlockedSlots}/3`);
   save();
   draw();
@@ -110,13 +114,14 @@ function pickHeroTarget(){
 function log(t){$('log').innerHTML=`<div>${t}</div>`+$('log').innerHTML}
 function lootLog(t,cls=''){ $('loot').innerHTML=`<div class='${cls}'>${t}</div>`+$('loot').innerHTML }
 
-const healCost=()=>8+state.shopHealLv*4;
-const reviveCost=()=>14+state.shopReviveLv*6;
-const atkCost=()=>16+state.shopAtkLv*10;
-const hpCost=()=>16+state.shopHpLv*10;
-const critCost=()=>20+state.shopCritLv*12;
-const critDmgCost=()=>24+state.shopCritDmgLv*14;
-const defCost=()=>18+state.shopDefLv*11;
+const costByLevel=(base,step,lv)=>base+lv*step;
+const healCost=()=>costByLevel(8,4,state.shopHealLv);
+const reviveCost=()=>costByLevel(14,6,state.shopReviveLv);
+const atkCost=()=>costByLevel(16,9,state.shopAtkLv);
+const hpCost=()=>costByLevel(16,9,state.shopHpLv);
+const critCost=()=>costByLevel(20,10,state.shopCritLv);
+const critDmgCost=()=>costByLevel(24,12,state.shopCritDmgLv);
+const defCost=()=>costByLevel(18,10,state.shopDefLv);
 const TALENT_COST=5;
 const TALENT_PCT_TIERS=[5,10,15,20,25];
 
@@ -284,6 +289,7 @@ function draw(){
   $('defBtn').textContent=`+1 Team Defense (${defCost()}g)`;
   $('talAtkPct').textContent=`Might Training (+5/10/15/20/25%) [${state.talents.atkPctLv||0}/5] (5 pt)`;
   $('talHpPct').textContent=`Fortitude Training (+5/10/15/20/25%) [${state.talents.hpPctLv||0}/5] (5 pt)`;
+  $('shopBalanceInfo').innerHTML=`Shop scaling: Heal +4/lv • Revive +6/lv • ATK/HP +9/lv • Crit +10/lv • CritDmg +12/lv • Def +10/lv`;
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
   drawReviveTargets(); drawClassChoices(); drawEquipUI(); drawSkillBar(); drawBattleStats();
@@ -698,6 +704,17 @@ $('heroUnlockChoices').onclick=(ev)=>{
   if(!b) return;
   unlockHeroByChoice(b.dataset.unlockHero);
 };
+$('heroUnlockContinueBtn').onclick=()=>{
+  if(state.pendingHeroUnlock) return;
+  $('heroUnlockModal').classList.add('hidden');
+  if(state.mode==='push') state.wave=state.highestWave+1;
+  save();
+  draw();
+  if(state.autoMode && !state.running){
+    spawnWave(state.wave);
+    startWave();
+  }
+};
 
 $('party').onclick=(ev)=>{
   const btn=ev.target.closest('button[data-class]'); if(!btn) return;
@@ -731,6 +748,7 @@ function normalizeLoadedState(){
   if(state.teamBuffCritDmg==null) state.teamBuffCritDmg=0;
   if(state.teamBuffDef==null) state.teamBuffDef=0;
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
+  if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
   if(!state.mode) state.mode='push';
   if(state.combo==null) state.combo=0;
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
@@ -753,6 +771,7 @@ function startNewGame(playerName,startClass){
   state.party=[hero];
   state.unlockedSlots=1;
   state.nextHeroUnlockWave=20;
+  state.pendingHeroUnlock=false;
   state.enemies=[];
   state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
   state.watchdog={noChangeTicks:0,lastTotalHp:0};
