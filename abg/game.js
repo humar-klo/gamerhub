@@ -5,6 +5,8 @@ const SETS=['Vanguard','Wildheart','Astral'];
 const state={
   wave:1,highestWave:0,gold:0,wins:0,running:false,paused:false,tick:null,speed:1,
   autoMode:true,mode:'push',combo:0,
+  partyTalentPts:0,
+  partyTalents:{treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0},
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
   watchdog:{noChangeTicks:0,lastTotalHp:0},
   waveAtkStack:0,
@@ -18,7 +20,7 @@ const state={
 
 function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
-  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
+  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
 }
 
 function setHeroLevel(hero,targetLevel){
@@ -140,6 +142,16 @@ const heroUpCost=(h,key)=>{
 };
 const TALENT_COST=5;
 const TALENT_PCT_TIERS=[5,10,15,20,25];
+const TEAM_TALENT_COST=5;
+function teamTalentMeta(){
+  return {
+    treasureHunter:{name:'Treasure Hunter',type:'single',short:'More gold + better drops for whole team.',detail:'+25% gold from all kills and +25% item drop chance.'},
+    warBannerLv:{name:'War Banner',type:'rank',max:5,short:'Team ATK scales up each rank.',detail:'+4% team ATK per rank (max +20%).'},
+    ironWallLv:{name:'Iron Wall',type:'rank',max:5,short:'Team damage reduction scaling.',detail:'+1 flat defense per hero per rank (max +5).'},
+    battleMedicLv:{name:'Battle Medic',type:'rank',max:5,short:'More post-wave recovery.',detail:'+3% extra heal after wave clear per rank.'},
+    furyDrumsLv:{name:'Fury Drums',type:'rank',max:5,short:'Faster skill cycling for everyone.',detail:'Each rank gives 10% chance per tick to reduce own skill CD by 1.'}
+  };
+}
 
 function xpToNext(h){ return 20 + (h.lvl-1)*12; }
 function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + (h.upCrit||0) + (h.advClass==='Sniper'?0.12:0) + ((h.talents?.adv1 && h.advClass==='Sniper')?0.06:0) + h.focus*0.001; }
@@ -152,7 +164,8 @@ function heroAtk(h){
   if(h.talents?.adv2 && (h.advClass==='Paladin' || h.advClass==='Warlock')) v+=Math.ceil(v*0.08);
   if(h.advClass==='Warlock') v+=2;
   if(h.focus>=80) v+=2;
-  return v;
+  const bannerMult=1+((state.partyTalents.warBannerLv||0)*0.04);
+  return Math.floor(v*bannerMult);
 }
 function heroMaxHp(h){
   let v=h.maxHp+(h.upHp||0)+h.gearHp+h.setHp;
@@ -214,6 +227,24 @@ function drawBattlefield(){
   $('partyLane').innerHTML=state.party.map((u,i)=>`<div class='sprite ${u.alive?'':'dead'}' id='p${i}'><img src='${u.icon}' alt=''></div>`).join('');
   $('enemyLane').innerHTML=state.enemies.map((u,i)=>`<div class='sprite enemy ${u.alive?'':'dead'}' id='e${i}'><img src='${u.icon}' alt=''></div>`).join('');
 }
+function previewHeroBulkCost(hero,lvKey){
+  const target=state.shopBuyAmount;
+  const maxBuys=(target==='max')?9999:target;
+  let gold=state.gold, buys=0, total=0;
+  let lv=hero[lvKey]||0;
+  const defs={upAtkLv:[14,9],upHpLv:[14,9],upCritLv:[18,11],upCritDmgLv:[20,12],upDefLv:[16,10]};
+  const [base,step]=defs[lvKey];
+  for(let i=0;i<maxBuys;i++){
+    const c=costByLevel(base,step,lv);
+    if(gold<c) break;
+    gold-=c;
+    total+=c;
+    buys++;
+    lv++;
+  }
+  return {buys,total};
+}
+
 function drawUpgradeUI(){
   $('upgradeHeroList').innerHTML=state.party.map((h,i)=>`<button class='hero-pill ${i===state.upgradeHeroIdx?'active':''}' data-uphero='${i}'>${h.name} Lv${h.lvl}</button>`).join('');
   const h=state.party[state.upgradeHeroIdx]||state.party[0];
@@ -235,11 +266,12 @@ function drawUpgradeUI(){
     ['ATK/HP breakdown',`${h.atk}+${h.upAtk||0}+${h.gearAtk||0} / ${h.maxHp}+${h.upHp||0}+${h.gearHp||0}`]
   ];
   $('upgradeInfo').innerHTML=`<div class='upgrade-split'><div class='upgrade-col'>${left.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div><div class='upgrade-col'>${right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
-  $('upAtkBtn').textContent=`+2 ATK (${heroUpCost(h,'upAtkLv')}g)`;
-  $('upHpBtn').textContent=`+12 Max HP (${heroUpCost(h,'upHpLv')}g)`;
-  $('upCritBtn').textContent=`+1% Crit (${heroUpCost(h,'upCritLv')}g)`;
-  $('upCritDmgBtn').textContent=`+5% Crit Dmg (${heroUpCost(h,'upCritDmgLv')}g)`;
-  $('upDefBtn').textContent=`+1 Defense (${heroUpCost(h,'upDefLv')}g)`;
+  const pAtk=previewHeroBulkCost(h,'upAtkLv'), pHp=previewHeroBulkCost(h,'upHpLv'), pCrit=previewHeroBulkCost(h,'upCritLv'), pCd=previewHeroBulkCost(h,'upCritDmgLv'), pDef=previewHeroBulkCost(h,'upDefLv');
+  $('upAtkBtn').textContent=`+2 ATK x${pAtk.buys} (${pAtk.total}g)`;
+  $('upHpBtn').textContent=`+12 Max HP x${pHp.buys} (${pHp.total}g)`;
+  $('upCritBtn').textContent=`+1% Crit x${pCrit.buys} (${pCrit.total}g)`;
+  $('upCritDmgBtn').textContent=`+5% Crit Dmg x${pCd.buys} (${pCd.total}g)`;
+  $('upDefBtn').textContent=`+1 Defense x${pDef.buys} (${pDef.total}g)`;
 }
 function drawClassChoices(){
   state.party.forEach((h,i)=>{
@@ -362,6 +394,7 @@ function draw(){
   $('comboLabel').textContent=`x${comboMult().toFixed(2)}`;
   $('speedLabel').textContent=`${state.speed}x`;
   $('modeLabel').textContent=state.mode==='push'?'Push':'Grind';
+  $('teamTalentsBtn').textContent=`Team Talents (${state.partyTalentPts||0})`;
   $('vsLabel').textContent=state.wave%5===0?'BOSS':'AUTO';
   $('startBtn').textContent=state.running?'In Combat':'Start / Resume';
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
@@ -430,7 +463,8 @@ function gainFocus(h,amount){ h.focus=clamp((h.focus||0)+amount,0,100); }
 
 function onEnemyKilled(enemy,killer){
   state.stats.waveKills=(state.stats.waveKills||0)+1;
-  const goldGain=Math.max(1,Math.round(enemy.gold*(killer.talents?.treasure?1.5:1)));
+  const partyGoldMult=state.partyTalents.treasureHunter?1.25:1;
+  const goldGain=Math.max(1,Math.round(enemy.gold*partyGoldMult));
   state.gold+=goldGain; state.wins++; log(`💰 ${enemy.name} dropped ${goldGain}g`);
   gainXp(killer,enemy.xp);
   gainFocus(killer,12);
@@ -519,7 +553,8 @@ function enemyAttack(c,d){
     if(absorbed>0) vfxAt(`p${state.party.indexOf(d)}`,'block');
   }
   const classDef=(d.talents?.adv2 && d.advClass==='Warden')?1:0;
-  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0)-classDef);
+  const teamDef=(state.partyTalents.ironWallLv||0);
+  dmg=Math.max(1,dmg-(d.setArmor||0)-(d.upDef||0)-classDef-teamDef);
   if(dmg>0){
     const final=Math.max(1,dmg);
     d.hp-=final;
@@ -572,6 +607,7 @@ function step(){
   state.party.forEach(h=>{
     const extraCdr=(h.talents?.adv3 && h.advClass==='Sorcerer')?1:0;
     if(h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1-(h.setCdr||0)-extraCdr);
+    if(h.abilityCd>0 && Math.random()<((state.partyTalents.furyDrumsLv||0)*0.1)) h.abilityCd=Math.max(0,h.abilityCd-1);
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
   });
   state.enemies.forEach(x=>{ if(x.markedTurns>0) x.markedTurns--; });
@@ -625,7 +661,7 @@ function talentMeta(key){
     secondWind:{name:'Second Wind',short:'Survive one lethal hit each wave.',detail:'Once per wave, this hero survives a lethal hit and returns at 30% max HP (45% for Warden with Safeguard).'},
     bloodlust:{name:'Bloodlust',short:'+1 stacking wave ATK on this hero kills.',detail:'When this hero gets a kill, team gains +1 wave ATK stack (max +10) until wave ends.'},
     echo:{name:'Arcane Echo',short:'Chance to trigger bonus echo hit.',detail:'Gives 15% chance for an extra hit dealing 40% damage. Sorcerer Chainspark adds +10% echo chance.'},
-    treasure:{name:'Treasure Hunter',short:'More gold and better loot odds.',detail:'Kills by this hero grant +50% gold. Also contributes to higher item drop chance if any party hero owns Treasure Hunter.'},
+
     battleRhythm:{name:'Battle Rhythm',short:'Kills reduce team skill cooldowns.',detail:'On this hero kill, all living allies reduce active skill cooldown by 1 turn.'},
     giantSlayer:{name:'Giant Slayer',short:'Bonus damage vs elites and bosses.',detail:'This hero deals +18% damage vs elite and boss enemies.'},
     atkPctLv:{name:'Might Training',short:'Permanent attack scaling.',detail:'+5/+10/+15/+20/+25% ATK across ranks 1-5 for this hero.'},
@@ -654,8 +690,7 @@ function mkItem(w){
   return {name:`${rarity} ${slot} i${ilvl}`,rarity,slot,atk,hp,crit,set,scrap:Math.round(3*mult + w*0.5)};
 }
 function maybeDropItem(enemy){
-  const treasureActive=state.party.some(h=>h.talents?.treasure);
-  const chance=(enemy.boss?0.9:0.18) * (treasureActive?1.25:1) * (enemy.affix?1.12:1);
+  const chance=(enemy.boss?0.9:0.18) * (state.partyTalents.treasureHunter?1.25:1) * (enemy.affix?1.12:1);
   if(Math.random()>chance) return;
   const item=mkItem(state.wave);
   const hero=state.party[Math.floor(Math.random()*state.party.length)];
@@ -678,6 +713,7 @@ function endWave(){
   const p=alive(state.party).length, e=alive(state.enemies).length;
   if(p>0&&e===0){
     const firstClear=state.wave>state.highestWave;
+    state.partyTalentPts += 1 + (state.wave%5===0?1:0);
     if(firstClear){
       const reward=12+state.wave*5; state.gold+=reward; state.highestWave=state.wave;
       if(state.wave%5===0) state.party.forEach(h=>h.talentPts=(h.talentPts||0)+1);
@@ -697,7 +733,8 @@ function endWave(){
     }else{
       log(`♻️ Wave ${state.wave} replay cleared. Respawning for grind.`);
     }
-    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*0.2)); h.cd=0; h.focus=Math.max(0,(h.focus||0)-20);});
+    const postWaveHeal=0.2 + (state.partyTalents.battleMedicLv||0)*0.03;
+    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal)); h.cd=0; h.focus=Math.max(0,(h.focus||0)-20);});
     state.enemies=[]; save(); draw();
     if(state.autoMode){
       // In grind mode, stay on the currently selected wave (do not snap backward unexpectedly).
@@ -732,6 +769,7 @@ function endWave(){
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
+$('teamTalentsBtn').onclick=()=>openTeamTalentModal();
 $('modeBtn').onclick=()=>{ 
   state.mode=state.mode==='push'?'grind':'push';
   if(!state.running){ state.enemies=[]; state.bossPending=false; }
@@ -787,7 +825,7 @@ function renderTalentModal(){
   const h=state.party[state.talentHeroIdx]; if(!h) return;
   $('talentHeroTitle').textContent=`${h.name} Talent Tree`;
   $('talentHeroPts').innerHTML=`<div class='stat-row'><span>Talent points</span><span>${h.talentPts||0}</span></div><div class='stat-row'><span>Class</span><span>${h.advClass||'Base'}</span></div>`;
-  const baseKeys=['secondWind','bloodlust','echo','treasure','battleRhythm','giantSlayer'];
+  const baseKeys=['secondWind','bloodlust','echo','battleRhythm','giantSlayer'];
   const baseButtons=baseKeys.map((k)=>{
     const meta=talentMeta(k);
     const owned=!!h.talents[k];
@@ -826,6 +864,37 @@ function buyHeroTalent(hero,key){
   save(); draw(); renderTalentModal();
 }
 
+function openTeamTalentModal(){ renderTeamTalentModal(); $('teamTalentModal').classList.remove('hidden'); }
+function renderTeamTalentModal(){
+  const t=state.partyTalents, meta=teamTalentMeta();
+  $('teamTalentPts').innerHTML=`<div class='stat-row'><span>Team talent points</span><span>${state.partyTalentPts||0}</span></div>`;
+  const make=(key)=>{
+    const m=meta[key];
+    const isRank=m.type==='rank';
+    const lv=t[key]||0;
+    const owned=!isRank && !!t[key];
+    const maxed=isRank && lv>=(m.max||1);
+    const label=isRank?`${m.name} [${lv}/${m.max}]`:`${m.name} (${owned?'owned':'5 pt'})`;
+    const disabled=(state.partyTalentPts||0)<TEAM_TALENT_COST || owned || maxed;
+    return `<button data-ptal='${key}' ${disabled?'disabled':''} title='${m.detail}'><b>${label}</b><br><small>${m.short}</small></button>`;
+  };
+  $('teamTalentButtons').innerHTML=['treasureHunter','warBannerLv','ironWallLv','battleMedicLv','furyDrumsLv'].map(make).join('');
+}
+function buyTeamTalent(key){
+  if((state.partyTalentPts||0)<TEAM_TALENT_COST) return;
+  const meta=teamTalentMeta()[key];
+  if(!meta) return;
+  if(meta.type==='rank'){
+    if((state.partyTalents[key]||0)>=meta.max) return;
+    state.partyTalents[key]=(state.partyTalents[key]||0)+1;
+  }else{
+    if(state.partyTalents[key]) return;
+    state.partyTalents[key]=true;
+  }
+  state.partyTalentPts-=TEAM_TALENT_COST;
+  save(); draw(); renderTeamTalentModal();
+}
+
 $('buyAmt1').onclick=()=>{ state.shopBuyAmount=1; draw(); };
 $('buyAmt5').onclick=()=>{ state.shopBuyAmount=5; draw(); };
 $('buyAmt10').onclick=()=>{ state.shopBuyAmount=10; draw(); };
@@ -859,7 +928,12 @@ $('advTalentButtons').onclick=(ev)=>{
   const h=state.party[state.talentHeroIdx]; if(!h || !h.advClass) return;
   buyHeroTalent(h,b.dataset.atal);
 };
+$('teamTalentButtons').onclick=(ev)=>{
+  const b=ev.target.closest('button[data-ptal]'); if(!b) return;
+  buyTeamTalent(b.dataset.ptal);
+};
 $('closeTalentModalBtn').onclick=()=>$('talentModal').classList.add('hidden');
+$('closeTeamTalentModalBtn').onclick=()=>$('teamTalentModal').classList.add('hidden');
 
 $('party').onclick=(ev)=>{
   const sbtn=ev.target.closest('button[data-skill-hero]');
@@ -883,8 +957,8 @@ function normalizeLoadedState(){
     if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
     if(h.upAtk==null) h.upAtk=0; if(h.upHp==null) h.upHp=0; if(h.upCrit==null) h.upCrit=0; if(h.upCritDmg==null) h.upCritDmg=0; if(h.upDef==null) h.upDef=0;
     if(h.talentPts==null) h.talentPts=0;
-    if(!h.talents) h.talents={secondWind:false,bloodlust:false,echo:false,treasure:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false};
-    ['secondWind','bloodlust','echo','treasure','battleRhythm','giantSlayer','adv1','adv2','adv3'].forEach(k=>{ if(h.talents[k]==null) h.talents[k]=false; });
+    if(!h.talents) h.talents={secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false};
+    ['secondWind','bloodlust','echo','battleRhythm','giantSlayer','adv1','adv2','adv3'].forEach(k=>{ if(h.talents[k]==null) h.talents[k]=false; });
     if(h.talents.atkPctLv==null) h.talents.atkPctLv=0;
     if(h.talents.hpPctLv==null) h.talents.hpPctLv=0;
     recomputeGearStats(h);
@@ -892,6 +966,8 @@ function normalizeLoadedState(){
     h.alive=h.hp>0;
     return h;
   });
+  if(!state.partyTalents) state.partyTalents={treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0};
+  if(state.partyTalentPts==null) state.partyTalentPts=0;
   if(state.shopBuyAmount==null) state.shopBuyAmount=1;
   if(state.pendingHeroUnlock==null) state.pendingHeroUnlock=false;
   if(state.upgradeHeroIdx==null) state.upgradeHeroIdx=0;
@@ -912,6 +988,8 @@ function startNewGame(playerName,startClass){
   state.playerName=(playerName||'Commander').trim()||'Commander';
   state.wave=1; state.highestWave=0; state.gold=0; state.wins=0; state.running=false; state.paused=false;
   state.waveAtkStack=0; state.combo=0;
+  state.partyTalentPts=0;
+  state.partyTalents={treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0};
   state.party=[hero];
   state.unlockedSlots=1;
   state.nextHeroUnlockWave=50;
