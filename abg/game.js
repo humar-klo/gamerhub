@@ -259,6 +259,19 @@ function startWave(){
   draw();
   loop();
 }
+
+function jumpToWave(targetWave){
+  clearInterval(state.tick);
+  state.running=false;
+  state.paused=false;
+  state.enemies=[];
+  state.bossPending=false;
+  state.wave=targetWave;
+  spawnWave(state.wave);
+  draw();
+  startWave();
+}
+
 function loop(){ clearInterval(state.tick); state.tick=setInterval(()=>{ if(!state.paused) step(); }, Math.max(130,540/state.speed)); }
 
 function flash(id){const el=$(id); if(!el) return; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');}
@@ -456,7 +469,8 @@ function maybeDropItem(enemy){
   if(!current || itemScore(item)>itemScore(current)){
     hero.equip[item.slot]=item; recomputeGearStats(hero);
     const cls=item.rarity==='Legendary'?'loot-l':item.rarity==='Mythic'?'loot-m':'loot-r';
-    lootLog(`🧩 ${hero.name} equipped ${item.name} [${item.set}]${hint}`,cls);
+    const setTag=item.set?` [${item.set}]`:'';
+    lootLog(`🧩 ${hero.name} equipped ${item.name}${setTag}${hint}`,cls);
   }else{
     state.gold+=item.scrap;
     lootLog(`🪙 Scrapped ${item.name}${hint} for ${item.scrap}g`,'loot-r');
@@ -519,8 +533,16 @@ $('modeBtn').onclick=()=>{
   draw(); 
 };
 $('resetBtn').onclick=()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); };
-$('prevWaveBtn').onclick=()=>{ if(state.running) return; state.wave=Math.max(1,state.wave-1); state.enemies=[]; state.bossPending=false; draw(); };
-$('nextWaveBtn').onclick=()=>{ if(state.running) return; state.wave=Math.min(state.highestWave+1,state.wave+1); state.enemies=[]; state.bossPending=false; draw(); };
+$('prevWaveBtn').onclick=()=>{
+  const target=Math.max(1,state.wave-1);
+  if(state.running){ log(`↩️ Jumping to Wave ${target}...`); jumpToWave(target); return; }
+  state.wave=target; state.enemies=[]; state.bossPending=false; draw();
+};
+$('nextWaveBtn').onclick=()=>{
+  const target=Math.min(state.highestWave+1,state.wave+1);
+  if(state.running){ log(`↪️ Jumping to Wave ${target}...`); jumpToWave(target); return; }
+  state.wave=target; state.enemies=[]; state.bossPending=false; draw();
+};
 
 $('healBtn').onclick=()=>{ const c=healCost(); if(state.gold<c) return; state.gold-=c; state.shopHealLv++; state.party.forEach(h=>{if(h.alive)h.hp=Math.min(heroMaxHp(h),h.hp+28)}); log(`Party healed (-${c}g).`); save(); draw(); };
 $('reviveBtn').onclick=()=>{ const anyKo=state.party.some(h=>!h.alive||h.hp<=0); if(!anyKo){ log('No KO ally to revive.'); return; } log(`Choose a KO ally below Revive (${reviveCost()}g).`); draw(); };
