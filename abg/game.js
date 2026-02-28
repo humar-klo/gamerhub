@@ -370,6 +370,7 @@ function slotIcon(slot){
 }
 function rarityClass(it){
   if(!it) return '';
+  if(it.rarity==='Godlike') return 'rarity-godlike';
   return it.rarity==='Legendary'?'rarity-legendary':it.rarity==='Mythic'?'rarity-mythic':'rarity-rare';
 }
 function setLine(name,count){
@@ -381,7 +382,14 @@ function drawEquipUI(){
   const h=state.party[state.equipHeroIdx];
   const counts={Vanguard:0,Wildheart:0,Astral:0};
   SLOTS.forEach(s=>{ const it=h.equip[s]; if(it?.set&&counts[it.set]!=null) counts[it.set]++; });
-  $('setSummary').innerHTML=`Set bonuses: ${setLine('Vanguard',counts.Vanguard)} • ${setLine('Wildheart',counts.Wildheart)} • ${setLine('Astral',counts.Astral)}`;
+  const on=(ok)=>ok?'✅':'▫️';
+  const v=counts.Vanguard,w=counts.Wildheart,a=counts.Astral;
+  $('setSummary').innerHTML=`
+    <b>Set bonuses</b><br>
+    ${setLine('Vanguard',v)} • ${on(v>=2)} +12 HP, +1 Armor • ${on(v>=4)} +3 ATK<br>
+    ${setLine('Wildheart',w)} • ${on(w>=2)} +4% Crit • ${on(w>=4)} +8% Leech<br>
+    ${setLine('Astral',a)} • ${on(a>=2)} +2 ATK • ${on(a>=4)} +1 CDR, +12% Skill Power
+  `;
   const slot=(key,label)=>{
     const it=h.equip[key];
     const setTag=it?.set?` • ${it.set}`:'';
@@ -392,7 +400,7 @@ function drawEquipUI(){
     ${slot('helm','Helm')}
     ${slot('amulet','Amulet')}
     ${slot('weapon','Weapon')}
-    <div class='pdoll'><div class='pdoll-label'>${h.name} • ${h.advClass||'Base Class'}</div></div>
+    <div class='pdoll'><img class='pdoll-hero' src='${h.icon}' alt='${h.name}'><div class='pdoll-label'>${h.name} • ${h.advClass||'Base Class'}</div></div>
     ${slot('offhand','Offhand')}
     ${slot('gloves','Gloves')}
     ${slot('chest','Chest')}
@@ -798,32 +806,33 @@ function talentMeta(key){
 }
 
 function itemScore(it){ return it.atk*2 + it.hp*0.25 + (it.crit||0)*120 + (it.set?2:0); }
-function mkItem(w){
+function mkItem(w,forceRarity=null){
   const rarityRoll=Math.random();
-  const rarity=rarityRoll<0.68?'Rare':rarityRoll<0.93?'Mythic':'Legendary';
-  const mult=rarity==='Rare'?1:rarity==='Mythic'?1.45:1.95;
+  const rarity=forceRarity || (rarityRoll<0.68?'Rare':rarityRoll<0.93?'Mythic':'Legendary');
+  const mult=rarity==='Rare'?1:rarity==='Mythic'?1.45:rarity==='Legendary'?1.95:3.8;
   const slot=SLOTS[Math.floor(Math.random()*SLOTS.length)];
   const ilvl=Math.max(1,Math.round(w + Math.random()*3));
   const atk=Math.max(0,Math.round((1+Math.random()*2+ilvl*0.07)*mult));
   const hp=Math.max(2,Math.round((4+Math.random()*7+ilvl*0.35)*mult));
-  const crit=(slot.includes('ring')||slot==='amulet')? Number((0.01*mult).toFixed(3)) : 0;
-  // Set items only appear on Mythic (purple) and Legendary tiers.
-  const set=(rarity==='Mythic' || rarity==='Legendary')
+  const crit=(slot.includes('ring')||slot==='amulet' || rarity==='Godlike')? Number((0.01*mult).toFixed(3)) : 0;
+  const set=(rarity==='Mythic' || rarity==='Legendary' || rarity==='Godlike')
     ? SETS[(slot.length + ilvl + Math.floor(Math.random()*5))%SETS.length]
     : null;
-  return {name:`${rarity} ${slot} i${ilvl}`,rarity,slot,atk,hp,crit,set,scrap:Math.round(3*mult + w*0.5)};
+  const name=(rarity==='Godlike'?`Godlike ✦ ${slot} i${ilvl}`:`${rarity} ${slot} i${ilvl}`);
+  return {name,rarity,slot,atk,hp,crit,set,scrap:Math.round((rarity==='Godlike'?20:3)*mult + w*0.5)};
 }
 function maybeDropItem(enemy){
   const chance=(enemy.boss?0.9:0.18) * (state.partyTalents.treasureHunter?1.25:1) * (enemy.affix?1.12:1);
   if(Math.random()>chance) return;
-  const item=mkItem(state.wave);
+  const godlikeRoll=enemy.boss && Math.random()<0.001;
+  const item=mkItem(state.wave,godlikeRoll?'Godlike':null);
   const hero=state.party[Math.floor(Math.random()*state.party.length)];
   const current=hero.equip[item.slot];
   const delta=Math.round((itemScore(item)-itemScore(current||{atk:0,hp:0,crit:0}))*10)/10;
   const hint=current?` (${delta>=0?'+':''}${delta} score vs equipped)`:` (+new slot)`;
   if(!current || itemScore(item)>itemScore(current)){
     hero.equip[item.slot]=item; recomputeGearStats(hero);
-    const cls=item.rarity==='Legendary'?'loot-l':item.rarity==='Mythic'?'loot-m':'loot-r';
+    const cls=item.rarity==='Godlike'?'loot-g':item.rarity==='Legendary'?'loot-l':item.rarity==='Mythic'?'loot-m':'loot-r';
     const setTag=item.set?` [${item.set}]`:'';
     lootLog(`🧩 ${hero.name} equipped ${item.name}${setTag}${hint}`,cls);
   }else{
