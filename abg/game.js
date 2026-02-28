@@ -20,7 +20,7 @@ const state={
 
 function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
-  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,focus:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
+  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,mana:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
 }
 
 function setHeroLevel(hero,targetLevel){
@@ -114,10 +114,10 @@ function pickEnemyTarget(){
   const marked=enemies.filter(e=>(e.markedTurns||0)>0);
   if(marked.length) return marked.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp))[0];
 
-  // Hybrid targeting: mostly focus weakest, sometimes spread pressure.
+  // Hybrid targeting: mostly prioritize weakest, sometimes spread pressure.
   const sorted=[...enemies].sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp));
-  const focus=Math.random()<0.7;
-  if(focus) return sorted[0];
+  const prioritizeWeakest=Math.random()<0.7;
+  if(prioritizeWeakest) return sorted[0];
 
   // Pick from upper survivors to avoid one brute being ignored forever.
   const altPool=sorted.slice(1);
@@ -153,7 +153,7 @@ function teamTalentMeta(){
 }
 
 function xpToNext(h){ return 20 + (h.lvl-1)*12; }
-function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + (h.upCrit||0) + (h.advClass==='Sniper'?0.12:0) + ((h.talents?.adv1 && h.advClass==='Sniper')?0.06:0) + h.focus*0.001; }
+function heroCrit(h){ return (h.skill==='crit'?0.2:0.08) + h.gearCrit + h.setCrit + (h.upCrit||0) + (h.advClass==='Sniper'?0.12:0) + ((h.talents?.adv1 && h.advClass==='Sniper')?0.06:0) + h.mana*0.001; }
 function heroAtk(h){
   let v=h.atk+(h.upAtk||0)+h.gearAtk+h.setAtk+state.waveAtkStack;
   const atkPct=TALENT_PCT_TIERS.slice(0,h.talents?.atkPctLv||0).reduce((s,x)=>s+x,0)/100;
@@ -162,7 +162,7 @@ function heroAtk(h){
   if(h.talents?.adv1 && h.advClass==='Berserker' && h.hp/heroMaxHp(h)<0.45) v+=Math.ceil(v*0.12);
   if(h.talents?.adv2 && (h.advClass==='Paladin' || h.advClass==='Warlock')) v+=Math.ceil(v*0.08);
   if(h.advClass==='Warlock') v+=2;
-  if(h.focus>=80) v+=2;
+  if(h.mana>=80) v+=2;
   const bannerMult=1+((state.partyTalents.warBannerLv||0)*0.04);
   return Math.floor(v*bannerMult);
 }
@@ -216,7 +216,7 @@ function drawList(id,arr,isParty=true){
       <div>
         <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}${u.boss?' 👑':''}${u.advClass?` • ${u.advClass}`:''}${!isParty?` • ${u.type}`:''}</div>
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
-        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
+        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
       ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
@@ -252,7 +252,7 @@ function drawUpgradeUI(){
     ['Hero',`${h.name} • Level: ${h.lvl}`],
     ['Total Max HP',`${heroMaxHp(h)}`],
     ['Total Defense',`${h.upDef||0}`],
-    ['Mana',`${Math.floor(h.focus||0)}/100`],
+    ['Mana',`${Math.floor(h.mana||0)}/100`],
     ['HP rank',`${h.upHpLv||0}`],
     ['Def rank',`${h.upDefLv||0}`]
   ];
@@ -458,7 +458,7 @@ function markTarget(id){ const el=$(id); if(!el) return; el.classList.add('targe
 function bossWarn(id){ const el=$(id); if(!el) return; el.classList.add('boss-warn'); setTimeout(()=>el.classList.remove('boss-warn'),500); }
 function floatText(id,text){ const el=$(id); if(!el) return; const f=document.createElement('span'); f.className='float'; f.textContent=text; el.appendChild(f); setTimeout(()=>f.remove(),520); }
 function vfxAt(id,kind='slash'){ const el=$(id); if(!el) return; const fx=document.createElement('span'); fx.className=`fx ${kind}`; el.appendChild(fx); setTimeout(()=>fx.remove(),240); }
-function gainFocus(h,amount){ h.focus=clamp((h.focus||0)+amount,0,100); }
+function gainMana(h,amount){ h.mana=clamp((h.mana||0)+amount,0,100); }
 
 function onEnemyKilled(enemy,killer){
   state.stats.waveKills=(state.stats.waveKills||0)+1;
@@ -466,7 +466,7 @@ function onEnemyKilled(enemy,killer){
   const goldGain=Math.max(1,Math.round(enemy.gold*partyGoldMult));
   state.gold+=goldGain; state.wins++; log(`💰 ${enemy.name} dropped ${goldGain}g`);
   gainXp(killer,enemy.xp);
-  gainFocus(killer,12);
+  gainMana(killer,12);
   if(killer.talents?.bloodlust){ state.waveAtkStack=Math.min(10,state.waveAtkStack+1); }
   if(killer.talents?.battleRhythm){ state.party.forEach(h=>{ if(h.alive&&h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1); }); }
   maybeDropItem(enemy);
@@ -475,8 +475,8 @@ function onEnemyKilled(enemy,killer){
 function castHeroSkill(i){
   const h=state.party[i];
   if(!h||!h.alive||h.abilityCd>0||!alive(state.enemies).length) return;
-  const empowered=(h.focus||0)>=50;
-  if(empowered) h.focus=Math.max(0,h.focus-50);
+  const empowered=(h.mana||0)>=50;
+  if(empowered) h.mana=Math.max(0,h.mana-50);
   const setMult=1+(h.setSkillMult||0)+(empowered?0.2:0)+((h.talents?.adv1 && h.advClass==='Sorcerer')?0.1:0);
   if(h.name==='Warrior'){
     const isB=h.advClass==='Berserker';
@@ -519,7 +519,7 @@ function heroAttack(a,b){
     const targets=alive(state.enemies).slice(0,a.advClass==='Sorcerer'?3:2);
     targets.forEach(x=>{ dealDamageToEnemy(a,x,dmg*0.72); vfxAt(`e${state.enemies.indexOf(x)}`,'burst'); });
     a.cd=4;
-    gainFocus(a,10);
+    gainMana(a,10);
     return;
   }
   dealDamageToEnemy(a,b,dmg); vfxAt(`e${state.enemies.indexOf(b)}`,'slash');
@@ -528,7 +528,7 @@ function heroAttack(a,b){
   if(a.advClass==='Warlock'){ a.hp=Math.min(heroMaxHp(a),a.hp+2); }
   const echoChance=(a.talents?.echo?0.15:0) + ((a.talents?.adv2 && a.advClass==='Sorcerer')?0.1:0);
   if(echoChance>0 && Math.random()<echoChance && b.alive){ dealDamageToEnemy(a,b,dmg*0.4); vfxAt(`e${state.enemies.indexOf(b)}`,'burst'); }
-  gainFocus(a,8);
+  gainMana(a,8);
   if(a.cd>0) a.cd--;
 }
 function enemyAttack(c,d){
@@ -561,7 +561,7 @@ function enemyAttack(c,d){
   vfxAt(`p${state.party.indexOf(d)}`,'hitfx');
   if(c.affix==='Vampiric' && dmg>0){ c.hp=Math.min(c.maxHp,c.hp+Math.ceil(dmg*0.2)); }
   if(c.affix==='Bastion' && Math.random()<0.15){ c.hp=Math.min(c.maxHp,c.hp+2); }
-  gainFocus(d,6);
+  gainMana(d,6);
   if(d.hp<=0&&d.alive){
     if(d.talents?.secondWind && !d.secondWindUsed){ d.secondWindUsed=true; const ratio=(d.talents?.adv3 && d.advClass==='Warden')?0.45:0.3; d.hp=Math.ceil(heroMaxHp(d)*ratio); log(`🪽 ${d.name} triggered Second Wind!`); return; }
     d.alive=false; log(`${c.name} downed ${d.name}.`);
@@ -579,7 +579,7 @@ function step(){
   if(state.autoSkillCast){
     const ready=state.party.map((h,i)=>({h,i})).filter(x=>x.h.alive && x.h.abilityCd<=0 && alive(state.enemies).length>0);
     if(ready.length){
-      ready.sort((a,b)=>(b.h.focus||0)-(a.h.focus||0));
+      ready.sort((a,b)=>(b.h.mana||0)-(a.h.mana||0));
       castHeroSkill(ready[0].i);
     }
   }
@@ -738,7 +738,7 @@ function endWave(){
       log(`♻️ Wave ${state.wave} replay cleared. Respawning for grind.`);
     }
     const postWaveHeal=0.2 + (state.partyTalents.battleMedicLv||0)*0.03;
-    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal)); h.cd=0; h.focus=Math.max(0,(h.focus||0)-20);});
+    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal)); h.cd=0; h.mana=Math.max(0,(h.mana||0)-20);});
     state.enemies=[]; save(); draw();
     if(state.autoMode){
       // In grind mode, stay on the currently selected wave (do not snap backward unexpectedly).
@@ -756,7 +756,7 @@ function endWave(){
     state.waveAtkStack=0;
     state.bossPending=false;
     log(`💀 Party wiped. -${penalty}g. Switched to GRIND at Wave ${state.wave}.`);
-    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.focus=0;h.secondWindUsed=false;});
+    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.mana=0;h.secondWindUsed=false;});
     state.enemies=[];
     save();
     draw();
@@ -960,7 +960,8 @@ function normalizeLoadedState(){
     if(h.lvl==null) h.lvl=1; if(h.xp==null) h.xp=0; if(!h.advClass) h.advClass=null;
     if(h.secondWindUsed==null) h.secondWindUsed=false;
     if(h.abilityCd==null) h.abilityCd=0; if(h.tempShield==null) h.tempShield=0;
-    if(h.focus==null) h.focus=0;
+    if(h.mana==null) h.mana=(h.focus==null?0:h.focus);
+    if(h.focus!=null) delete h.focus;
     if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
     if(h.upAtk==null) h.upAtk=0; if(h.upHp==null) h.upHp=0; if(h.upCrit==null) h.upCrit=0; if(h.upCritDmg==null) h.upCritDmg=0; if(h.upDef==null) h.upDef=0;
     if(h.talentPts==null) h.talentPts=0;
