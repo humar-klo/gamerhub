@@ -291,12 +291,23 @@ function drawUpgradeUI(){
   const rightRows=right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('');
   $('upgradeInfo').innerHTML=`${heroRow}<div class='upgrade-split'><div class='upgrade-col'>${leftRows}</div><div class='upgrade-col'>${rightRows}</div></div>`;
   const pAtk=previewHeroBulkCost(h,'upAtkLv'), pHp=previewHeroBulkCost(h,'upHpLv'), pMana=previewHeroBulkCost(h,'upManaLv'), pCrit=previewHeroBulkCost(h,'upCritLv'), pCd=previewHeroBulkCost(h,'upCritDmgLv'), pDef=previewHeroBulkCost(h,'upDefLv');
-  $('upAtkBtn').textContent=`+2 ATK x${pAtk.buys} (${pAtk.total}g)`;
-  $('upHpBtn').textContent=`+12 Max HP x${pHp.buys} (${pHp.total}g)`;
-  $('upManaBtn').textContent=`+10 Max Mana x${pMana.buys} (${pMana.total}g)`;
-  $('upCritBtn').textContent=`+1% Crit x${pCrit.buys} (${pCrit.total}g)`;
-  $('upCritDmgBtn').textContent=`+5% Crit Dmg x${pCd.buys} (${pCd.total}g)`;
-  $('upDefBtn').textContent=`+1 Defense x${pDef.buys} (${pDef.total}g)`;
+  const setBtn=(id,label,preview,key)=>{
+    const next=heroUpCost(h,key);
+    const el=$(id);
+    if(preview.buys<=0){
+      el.innerHTML=`${label} <span class='cost-bad'>(${next}g)</span>`;
+      el.disabled=true;
+    }else{
+      el.textContent=`${label} x${preview.buys} (${preview.total}g)`;
+      el.disabled=false;
+    }
+  };
+  setBtn('upAtkBtn','+2 ATK',pAtk,'upAtkLv');
+  setBtn('upHpBtn','+12 Max HP',pHp,'upHpLv');
+  setBtn('upManaBtn','+10 Max Mana',pMana,'upManaLv');
+  setBtn('upCritBtn','+1% Crit',pCrit,'upCritLv');
+  setBtn('upCritDmgBtn','+5% Crit Dmg',pCd,'upCritDmgLv');
+  setBtn('upDefBtn','+1 Defense',pDef,'upDefLv');
 }
 function drawClassChoices(){
   state.party.forEach((h,i)=>{
