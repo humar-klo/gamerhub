@@ -451,7 +451,8 @@ function drawDebugBadge(){
   const status=waitingUnlock?'awaiting hero pick':(state.running?(state.paused?'paused':'running'):'idle');
   const reason=state.runtime?.lastIdleReason||'—';
   const errs=state.runtime?.errors||0;
-  $('debugBadge').innerHTML=`state: <b>${status}</b><br>since step: <b>${sinceStep}s</b> • loop resets: <b>${state.runtime?.loopResets||0}</b><br>reason: <b>${reason}</b> • errs: <b>${errs}</b>`;
+  const pAlive=alive(state.party).length, eAlive=alive(state.enemies).length;
+  $('debugBadge').innerHTML=`state: <b>${status}</b> • auto: <b>${state.autoMode?'on':'off'}</b><br>since step: <b>${sinceStep}s</b> • loop resets: <b>${state.runtime?.loopResets||0}</b><br>p/e: <b>${pAlive}/${eAlive}</b> • reason: <b>${reason}</b> • errs: <b>${errs}</b>`;
 }
 
 function draw(){
@@ -1179,6 +1180,25 @@ window.addEventListener('error',(ev)=>{
   state.runtime.lastIdleReason=`js-error: ${state.runtime.lastError.slice(0,32)}`;
   draw();
 });
+
+function rescueCombatIfStalled(){
+  const waitingUnlock=!$('heroUnlockModal').classList.contains('hidden');
+  if(waitingUnlock || state.paused || state.running || !state.autoMode) return;
+  const pAlive=alive(state.party).length;
+  if(!pAlive) return;
+  const eAlive=alive(state.enemies).length;
+  state.runtime.lastIdleReason='rescue-check';
+  if(eAlive>0){
+    state.runtime.loopResets=(state.runtime.loopResets||0)+1;
+    startWave();
+    return;
+  }
+  spawnWave(state.wave);
+  state.runtime.loopResets=(state.runtime.loopResets||0)+1;
+  startWave();
+}
+setInterval(rescueCombatIfStalled,1000);
+
 window.addEventListener('unhandledrejection',(ev)=>{
   state.runtime.errors=(state.runtime.errors||0)+1;
   state.runtime.lastError=String(ev.reason||'promise-rejection');
