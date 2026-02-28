@@ -427,11 +427,21 @@ function endWave(){
   }
   if(p===0){
     const penalty=state.wave*5; state.gold=Math.max(0,state.gold-penalty);
-    state.wave=Math.max(1,state.highestWave||1);
-    log(`💀 Party wiped. -${penalty}g. Sent to infinite Wave ${state.wave} grind.`);
-    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.focus=0;});
-    state.enemies=[]; save(); draw();
-    if(state.autoMode){ spawnWave(state.wave); startWave(); }
+    // Hard switch to grind after wipe to prevent push-mode deadlocks on failed progression.
+    state.mode='grind';
+    state.wave=Math.max(1,state.highestWave||state.wave||1);
+    state.combo=0;
+    state.waveAtkStack=0;
+    state.bossPending=false;
+    log(`💀 Party wiped. -${penalty}g. Switched to GRIND at Wave ${state.wave}.`);
+    state.party.forEach(h=>{h.alive=true;h.hp=Math.ceil(heroMaxHp(h)*0.92);h.cd=0;h.focus=0;h.secondWindUsed=false;});
+    state.enemies=[];
+    save();
+    draw();
+    if(state.autoMode){
+      spawnWave(state.wave);
+      startWave();
+    }
     return;
   }
   save(); draw();
