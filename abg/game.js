@@ -4,7 +4,7 @@ const SETS=['Vanguard','Wildheart','Astral'];
 
 const state={
   wave:1,highestWave:0,gold:0,wins:0,running:false,paused:false,tick:null,speed:1,
-  autoMode:true,mode:'push',combo:0,
+  autoMode:true,mode:'push',
   partyTalentPts:0,
   partyTalents:{treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0},
   stats:{waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:0},
@@ -104,7 +104,6 @@ const $=id=>document.getElementById(id);
 const alive=a=>a.filter(x=>x.alive);
 const pick=a=>{const x=alive(a);return x[Math.floor(Math.random()*x.length)]};
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
-const comboMult=()=>1+Math.min(0.25,(state.combo||0)*0.0125);
 const fmtNum=n=>Math.round(n).toLocaleString();
 
 function pickEnemyTarget(){
@@ -178,7 +177,7 @@ function heroMaxHp(h){
 }
 function enemyArmor(e){ return Math.max(0,e.armor||0); }
 function dealDamageToEnemy(attacker,enemy,raw){
-  let dmg=Math.max(1,Math.floor(raw*comboMult()));
+  let dmg=Math.max(1,Math.floor(raw));
   if(enemy.markedTurns>0) dmg=Math.floor(dmg*(1+enemy.markedAmp));
   if(attacker.talents?.giantSlayer && (enemy.boss||enemy.elite)) dmg=Math.floor(dmg*1.18);
   if(attacker.talents?.adv2 && (attacker.advClass==='Berserker' || attacker.advClass==='Warlock') && (enemy.boss||enemy.elite)) dmg=Math.floor(dmg*1.1);
@@ -217,7 +216,7 @@ function drawList(id,arr,isParty=true){
       <div>
         <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}${u.boss?' 👑':''}${u.advClass?` • ${u.advClass}`:''}${!isParty?` • ${u.type}`:''}</div>
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
-        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Focus ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
+        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • TalPts ${u.talentPts||0} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.focus||0)} • Skill CD ${u.abilityCd||0}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
       ${isParty?`<div class='mini-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
@@ -251,18 +250,19 @@ function drawUpgradeUI(){
   if(!h) return;
   const left=[
     ['Hero',`${h.name} • Level: ${h.lvl}`],
-    ['ATK rank',`${h.upAtkLv||0}`],
+    ['Total Max HP',`${heroMaxHp(h)}`],
+    ['Total Defense',`${h.upDef||0}`],
+    ['Mana',`${Math.floor(h.focus||0)}/100`],
     ['HP rank',`${h.upHpLv||0}`],
-    ['Crit rank',`${h.upCritLv||0}`],
-    ['CritDmg rank',`${h.upCritDmgLv||0}`],
     ['Def rank',`${h.upDefLv||0}`]
   ];
   const right=[
     ['Total ATK',`${heroAtk(h)}`],
-    ['Total Max HP',`${heroMaxHp(h)}`],
     ['Total Crit',`${(heroCrit(h)*100).toFixed(1)}%`],
     ['Total Crit Dmg Bonus',`${Math.round((h.upCritDmg||0)*100)}%`],
-    ['Total Defense',`${h.upDef||0}`],
+    ['ATK rank',`${h.upAtkLv||0}`],
+    ['Crit rank',`${h.upCritLv||0}`],
+    ['CritDmg rank',`${h.upCritDmgLv||0}`],
     ['ATK/HP breakdown',`${h.atk}+${h.upAtk||0}+${h.gearAtk||0} / ${h.maxHp}+${h.upHp||0}+${h.gearHp||0}`]
   ];
   $('upgradeInfo').innerHTML=`<div class='upgrade-split'><div class='upgrade-col'>${left.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div><div class='upgrade-col'>${right.map(([k,v])=>`<div class='stat-row'><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
@@ -296,13 +296,13 @@ function skillName(h){
   return 'Arcane Nova';
 }
 function skillTooltip(h){
-  if(h.advClass==='Paladin') return 'Guardian Oath: Team shield + team heal (5, empowered 8). CD 8. Empowered at 50 focus.';
-  if(h.advClass==='Berserker') return 'Rage Slam: Team shield + single heavy strike (125% ATK). CD 8. Empowered at 50 focus.';
+  if(h.advClass==='Paladin') return 'Guardian Oath: Team shield + team heal (5, empowered 8). CD 8. Empowered at 50 mana.';
+  if(h.advClass==='Berserker') return 'Rage Slam: Team shield + single heavy strike (125% ATK). CD 8. Empowered at 50 mana.';
   if(h.advClass==='Sniper') return 'Deadeye Volley: Hits all enemies, applies mark amp 32% (+8% with Pinpoint). CD 8.';
   if(h.advClass==='Warden') return 'Thorn Volley: Hits all enemies, applies marks, grants team shield (3, empowered 5). CD 8.';
   if(h.advClass==='Sorcerer') return 'Tempest Nova: Main hit + chain splash (1/2 extra targets). CD 8. Skill scaling boosted by Overcharge.';
   if(h.advClass==='Warlock') return 'Soul Drain: Heavy single-target spell, self-heal 10 (empowered 16). CD 8.';
-  if(h.name==='Warrior') return 'Guardian Cry: Team shield skill. CD 8. Empowered at 50 focus.';
+  if(h.name==='Warrior') return 'Guardian Cry: Team shield skill. CD 8. Empowered at 50 mana.';
   if(h.name==='Ranger') return 'Volley: Multi-target ranged strike with mark setup. CD 8.';
   return 'Arcane Nova: Spell burst attack. CD 8.';
 }
@@ -391,9 +391,8 @@ function drawStatsPanel(){
 
 function draw(){
   $('wave').textContent=state.wave; $('highestWave').textContent=state.highestWave; $('gold').textContent=state.gold; $('wins').textContent=state.wins;
-  $('comboLabel').textContent=`x${comboMult().toFixed(2)}`;
   $('speedLabel').textContent=`${state.speed}x`;
-  $('modeLabel').textContent=state.mode==='push'?'Push':'Grind';
+  $('modeBtn').textContent=`Mode: ${state.mode==='push'?'Push':'Grind'}`;
   $('teamTalentsBtn').textContent=`Team Talents (${state.partyTalentPts||0})`;
   $('autoSkillBtn').textContent=`Auto Skill: ${state.autoSkillCast?'ON':'OFF'}`;
   $('vsLabel').textContent=state.wave%5===0?'BOSS':'AUTO';
@@ -419,7 +418,6 @@ function spawnWave(w=state.wave){
   const boss=w%5===0;
   state.enemies=boss?[mkEnemy(0,w,true)]:Array.from({length:Math.min(5,2+Math.floor(w/2))},(_,i)=>mkEnemy(i,w,false));
   state.waveAtkStack=0;
-  state.combo=0;
   state.stats.waveKills=0;
   state.stats.dmgDealt=0;
   state.stats.dmgTaken=0;
@@ -469,9 +467,6 @@ function onEnemyKilled(enemy,killer){
   state.gold+=goldGain; state.wins++; log(`💰 ${enemy.name} dropped ${goldGain}g`);
   gainXp(killer,enemy.xp);
   gainFocus(killer,12);
-  state.combo=Math.min(20,(state.combo||0)+1);
-  if(state.combo>0 && state.combo%5===0) log(`🔥 Combo surged to ${state.combo} (${comboMult().toFixed(2)}x damage)`);
-  if(state.combo>0 && state.combo%8===0){ state.gold+=2; log('✨ Combo bonus +2g'); }
   if(killer.talents?.bloodlust){ state.waveAtkStack=Math.min(10,state.waveAtkStack+1); }
   if(killer.talents?.battleRhythm){ state.party.forEach(h=>{ if(h.alive&&h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1); }); }
   maybeDropItem(enemy);
@@ -569,7 +564,7 @@ function enemyAttack(c,d){
   gainFocus(d,6);
   if(d.hp<=0&&d.alive){
     if(d.talents?.secondWind && !d.secondWindUsed){ d.secondWindUsed=true; const ratio=(d.talents?.adv3 && d.advClass==='Warden')?0.45:0.3; d.hp=Math.ceil(heroMaxHp(d)*ratio); log(`🪽 ${d.name} triggered Second Wind!`); return; }
-    d.alive=false; state.combo=0; log(`${c.name} downed ${d.name} (combo reset)`);
+    d.alive=false; log(`${c.name} downed ${d.name}.`);
   }
 }
 function step(){
@@ -758,7 +753,6 @@ function endWave(){
     state.mode='grind';
     // Keep player near current progression instead of hard snapping backward.
     state.wave=Math.max(1,Math.min(state.wave||1,(state.highestWave||1)+1));
-    state.combo=0;
     state.waveAtkStack=0;
     state.bossPending=false;
     log(`💀 Party wiped. -${penalty}g. Switched to GRIND at Wave ${state.wave}.`);
@@ -987,7 +981,6 @@ function normalizeLoadedState(){
   if(state.autoSkillCast==null) state.autoSkillCast=true;
   if(!state.statsView) state.statsView='total';
   if(!state.mode) state.mode='push';
-  if(state.combo==null) state.combo=0;
   if(!state.highestWave && state.wave>1) state.highestWave=state.wave-1;
   state.wave=Math.max(1,state.wave||1);
   if(!state.stats) state.stats={waveKills:0,dmgDealt:0,dmgTaken:0,wavesCleared:0,lastWaveMs:0,waveStartTs:Date.now()};
@@ -1001,7 +994,7 @@ function startNewGame(playerName,startClass){
   const hero=heroTemplate(startClass||'Warrior');
   state.playerName=(playerName||'Commander').trim()||'Commander';
   state.wave=1; state.highestWave=0; state.gold=0; state.wins=0; state.running=false; state.paused=false;
-  state.waveAtkStack=0; state.combo=0;
+  state.waveAtkStack=0;
   state.partyTalentPts=0;
   state.partyTalents={treasureHunter:false,warBannerLv:0,ironWallLv:0,battleMedicLv:0,furyDrumsLv:0};
   state.party=[hero];
