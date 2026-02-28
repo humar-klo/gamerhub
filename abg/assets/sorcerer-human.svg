@@ -1,10 +1,20 @@
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'>
-  <rect width='128' height='128' rx='16' fill='#25173a'/>
+  <defs>
+    <radialGradient id='orb' cx='50%' cy='50%' r='50%'>
+      <stop offset='0' stop-color='#9ff6ff'/>
+      <stop offset='1' stop-color='#3ec7ff'/>
+    </radialGradient>
+  </defs>
+  <rect width='128' height='128' rx='16' fill='#170f33'/>
+  <ellipse cx='64' cy='112' rx='30' ry='8' fill='#000' opacity='.25'/>
   <circle cx='64' cy='30' r='14' fill='#efc4a0'/>
-  <rect x='46' y='44' width='36' height='38' rx='10' fill='#7a56b5'/>
-  <rect x='50' y='80' width='10' height='26' rx='4' fill='#6a4aa0'/>
-  <rect x='68' y='80' width='10' height='26' rx='4' fill='#6a4aa0'/>
-  <rect x='84' y='38' width='6' height='50' rx='3' fill='#a8d0ff'/>
-  <circle cx='87' cy='34' r='7' fill='#7bd7ff'/>
-  <circle cx='46' cy='24' r='5' fill='#c7a7ff'/>
+  <path d='M44 46l20-10 20 10-4 38a10 10 0 0 1-10 9H58a10 10 0 0 1-10-9z' fill='#6e4be2'/>
+  <path d='M50 52h28l-3 12H53z' fill='#8c6dff'/>
+  <rect x='50' y='84' width='10' height='22' rx='4' fill='#5b3cbc'/>
+  <rect x='68' y='84' width='10' height='22' rx='4' fill='#5b3cbc'/>
+  <rect x='88' y='34' width='6' height='54' rx='3' fill='#bce7ff'/>
+  <circle cx='91' cy='30' r='9' fill='url(#orb)'/>
+  <circle cx='91' cy='30' r='13' fill='none' stroke='#6be6ff' stroke-opacity='.45' stroke-width='2'/>
+  <path d='M30 24l8 4-8 4-4 8-4-8-8-4 8-4 4-8z' fill='#caa7ff'/>
+  <path d='M100 52l5 2-5 2-2 5-2-5-5-2 5-2 2-5z' fill='#8cf0ff'/>
 </svg>
