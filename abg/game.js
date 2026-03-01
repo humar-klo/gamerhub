@@ -485,7 +485,7 @@ function drawDebugBadge(){
 
 function draw(){
   $('wave').textContent=state.wave; $('highestWave').textContent=state.highestWave; $('gold').textContent=state.gold; $('wins').textContent=state.wins;
-  $('speedLabel').textContent=`${state.speed}x`;
+  $('speedLabel').textContent=`Speed ${state.speed}x`;
   $('modeBtn').textContent=`Mode: ${state.mode==='push'?'Push':'Grind'}`;
   $('teamTalentsBtn').textContent=`Team Talents (${state.partyTalentPts||0})`;
   $('autoSkillBtn').textContent=`Auto Skill: ${state.autoSkillCast?'ON':'OFF'}`;
