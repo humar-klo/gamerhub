@@ -25,6 +25,12 @@ function mkHero(name,icon,hp,atk,skill){
   return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,mana:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upManaLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upMana:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
 }
 
+function talentPtsFromLevel(lvl){
+  let pts=0;
+  for(let l=2;l<=lvl;l++) if(l%3===0) pts+=2;
+  return pts;
+}
+
 function setHeroLevel(hero,targetLevel){
   const lvl=Math.max(1,Math.floor(targetLevel||1));
   while(hero.lvl<lvl){
@@ -32,6 +38,7 @@ function setHeroLevel(hero,targetLevel){
     hero.maxHp+=6;
     hero.atk+=2;
   }
+  hero.talentPts=Math.max(hero.talentPts||0,talentPtsFromLevel(hero.lvl));
   hero.xp=0;
   hero.hp=heroMaxHp(hero);
   hero.alive=true;
@@ -847,7 +854,7 @@ function endWave(){
   state.runtime.lastIdleReason=`endWave p:${p} e:${e}`;
   if(p>0&&e===0){
     const firstClear=state.wave>state.highestWave;
-    state.partyTalentPts += 1 + (state.wave%5===0?1:0);
+    if(firstClear) state.partyTalentPts += 1 + (state.wave%5===0?1:0);
     if(firstClear){
       const reward=12+state.wave*5; state.gold+=reward; state.highestWave=state.wave;
       if(state.wave%5===0) state.party.forEach(h=>h.talentPts=(h.talentPts||0)+1);
@@ -870,7 +877,15 @@ function endWave(){
       log(`♻️ Wave ${state.wave} replay cleared. Respawning for grind.`);
     }
     const postWaveHeal=0.2 + (state.partyTalents.battleMedicLv||0)*0.03;
-    state.party.forEach(h=>{h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal)); h.cd=0; h.mana=Math.max(0,(h.mana||0)-12);});
+    state.party.forEach(h=>{
+      if(!h.alive || h.hp<=0){
+        h.alive=true;
+        h.hp=Math.ceil(heroMaxHp(h)*0.35);
+      }
+      h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal));
+      h.cd=0;
+      h.mana=Math.max(0,(h.mana||0)-12);
+    });
     state.enemies=[]; save(); draw();
     if(state.autoMode){
       // In grind mode, stay on the currently selected wave (do not snap backward unexpectedly).
@@ -909,6 +924,7 @@ $('autoSkillBtn').onclick=()=>{ state.autoSkillCast=!state.autoSkillCast; draw()
 $('teamTalentsBtn').onclick=()=>openTeamTalentModal();
 $('modeBtn').onclick=()=>{ 
   state.mode=state.mode==='push'?'grind':'push';
+  if(state.mode==='push') state.wave=Math.max(1,(state.highestWave||0)+1);
   if(!state.running){ state.enemies=[]; state.bossPending=false; }
   log(`Mode changed to ${state.mode.toUpperCase()}.`); 
   save(); 
