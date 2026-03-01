@@ -9,22 +9,22 @@
 <body>
   <main class="app">
     <header>
-      <h1>ABG v1.1 — Auto Battler RPG <span style="font-size:.72em;opacity:.82">[live: ROLL-002]</span></h1>
+      <h1>ABG v1.1 — Auto Battler RPG <span style="font-size:.72em;opacity:.82">[live: ROLL-003]</span></h1>
       <p>Infinite wave replay • Grinding • Class evolution • Equipment sets • Active skills</p>
     </header>
 
     <section class="topbar">
+      <button id="startBtn">Start Run</button>
+      <button id="pauseBtn">Pause</button>
+      <div>Speed <button id="speedLabel" class="speed-pill" title="Toggle speed">1x</button></div>
       <div>Wave <b id="wave">1</b></div>
       <div>Highest <b id="highestWave">0</b></div>
       <div>Gold <b id="gold">0</b></div>
       <div>Kills <b id="wins">0</b></div>
-      <div>Speed <button id="speedLabel" class="speed-pill" title="Toggle speed">1x</button></div>
       <button id="modeBtn">Mode: Push</button>
       <button id="teamTalentsBtn">Team Talents (0)</button>
       <button id="prevWaveBtn">◀ Wave</button>
       <button id="nextWaveBtn">Wave ▶</button>
-      <button id="startBtn">Start Run</button>
-      <button id="pauseBtn">Pause</button>
       <button id="autoSkillBtn">Auto Skill: ON</button>
       <button id="resetBtn" class="danger">Reset</button>
       <div id="debugBadge" class="debug-badge">debug</div>

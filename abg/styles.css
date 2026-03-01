@@ -2,7 +2,7 @@ body{margin:0;font-family:Inter,system-ui;background:#090d1a;color:#e8edff}
 .app{max-width:1100px;margin:0 auto;padding:0 14px}
 h1{margin:.2rem 0}
 .topbar{position:sticky;top:0;z-index:25;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:linear-gradient(180deg,#141c35,#10162a);border:1px solid #2a355f;padding:10px;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
-.topbar>div{background:rgba(255,255,255,.03);border:1px solid rgba(133,159,255,.2);padding:5px 8px;border-radius:8px}
+.topbar>div{background:rgba(255,255,255,.03);border:1px solid rgba(133,159,255,.2);padding:8px 12px;border-radius:8px;min-height:34px;display:flex;align-items:center;gap:6px}
 .upgrade-stats-row{display:grid;grid-template-columns:7fr 3fr;gap:12px;margin-top:12px}
 #comboLabel{color:#ffd27a;text-shadow:0 0 10px rgba(255,192,96,.35)}
 button{background:#5d6dff;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
@@ -111,8 +111,8 @@ input,select{background:#0b1020;color:#e8edff;border:1px solid #2a355f;padding:8
     scrollbar-width:none;
   }
   .topbar::-webkit-scrollbar{display:none}
-  .topbar>div{padding:4px 6px;font-size:.78rem;white-space:nowrap}
-  .topbar button{padding:6px 8px;font-size:.8rem;white-space:nowrap}
+  .topbar>div{padding:6px 8px;font-size:.8rem;white-space:nowrap;min-height:32px}
+  .topbar button{padding:6px 8px;font-size:.8rem;white-space:nowrap;min-height:32px}
 
   .upgrade-stats-row{grid-template-columns:1fr}
   .upgrade-split{grid-template-columns:1fr}
