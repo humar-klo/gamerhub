@@ -99,4 +99,27 @@ input,select{background:#0b1020;color:#e8edff;border:1px solid #2a355f;padding:8
 .modal-card p{margin:0;opacity:.9;font-size:.9rem}
 .modal-card label{display:flex;flex-direction:column;gap:6px;font-size:.88rem}
 
-@media(max-width:800px){.upgrade-stats-row{grid-template-columns:1fr}.upgrade-split{grid-template-columns:1fr}.upgrade-btn-grid{grid-template-columns:1fr}.upgrade-btn-grid button:last-child{grid-column:auto}.grid{grid-template-columns:1fr}.battlefield{grid-template-columns:1fr;}.vs{display:none}.equip-body{grid-template-columns:1fr 1fr;grid-template-areas:'shoulders amulet' 'helm helm' 'weapon offhand' 'gloves ring1' 'chest chest' 'belt boots' 'paperdoll ring2';}.pdoll{min-height:140px}}
+@media(max-width:800px){
+  .topbar{
+    top:0;
+    padding:6px;
+    gap:6px;
+    border-radius:0 0 10px 10px;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .topbar::-webkit-scrollbar{display:none}
+  .topbar>div{padding:4px 6px;font-size:.78rem;white-space:nowrap}
+  .topbar button{padding:6px 8px;font-size:.8rem;white-space:nowrap}
+
+  .upgrade-stats-row{grid-template-columns:1fr}
+  .upgrade-split{grid-template-columns:1fr}
+  .upgrade-btn-grid{grid-template-columns:1fr}
+  .upgrade-btn-grid button:last-child{grid-column:auto}
+  .grid{grid-template-columns:1fr}
+  .battlefield{grid-template-columns:1fr;}
+  .vs{display:none}
+  .equip-body{grid-template-columns:1fr 1fr;grid-template-areas:'shoulders amulet' 'helm helm' 'weapon offhand' 'gloves ring1' 'chest chest' 'belt boots' 'paperdoll ring2';}
+  .pdoll{min-height:140px}
+}
