@@ -945,7 +945,12 @@ function endWave(){
   save(); draw();
 }
 
-$('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
+$('startBtn').onclick=()=>{
+  const newGameOpen = !$('newGameModal').classList.contains('hidden');
+  if(newGameOpen){ log('Choose your name and starter class first.'); return; }
+  if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1;
+  startWave();
+};
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; state.runtime.lastIdleReason=state.paused?'paused-by-user':'running'; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
 $('speedLabel').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; if(state.running) loop(); draw(); save(); };
 $('autoSkillBtn').onclick=()=>{ state.autoSkillCast=!state.autoSkillCast; draw(); save(); };
@@ -1239,7 +1244,8 @@ window.addEventListener('error',(ev)=>{
 
 function rescueCombatIfStalled(){
   const waitingUnlock=!$('heroUnlockModal').classList.contains('hidden');
-  if(waitingUnlock || state.paused || state.running || !state.autoMode) return;
+  const waitingNewGame=!$('newGameModal').classList.contains('hidden');
+  if(waitingUnlock || waitingNewGame || state.paused || state.running || !state.autoMode) return;
   const pAlive=alive(state.party).length;
   if(!pAlive) return;
   const eAlive=alive(state.enemies).length;
@@ -1266,11 +1272,14 @@ const hasSave=load();
 if(hasSave) normalizeLoadedState();
 
 if(!hasSave){
+  // Prevent autoplay/rescue loop before initial setup is completed.
+  state.autoMode=false;
   $('newGameModal').classList.remove('hidden');
   $('startNewGameBtn').onclick=()=>{
     const name=$('playerNameInput').value;
     const cls=$('startClassSelect').value;
     startNewGame(name,cls);
+    state.autoMode=true;
     $('newGameModal').classList.add('hidden');
   };
 }else{
