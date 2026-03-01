@@ -490,7 +490,8 @@ function draw(){
   $('teamTalentsBtn').textContent=`Team Talents (${state.partyTalentPts||0})`;
   $('autoSkillBtn').textContent=`Auto Skill: ${state.autoSkillCast?'ON':'OFF'}`;
   $('vsLabel').textContent=state.wave%5===0?'BOSS':'AUTO';
-  $('startBtn').textContent=state.running?'In Combat':'Start / Resume';
+  $('startBtn').textContent='Start / Resume';
+  $('startBtn').disabled=state.running;
   $('pauseBtn').textContent=state.paused?'Resume':'Pause';
   [1,5,10,'max'].forEach(v=>{ const el=$(`buyAmt${String(v).toUpperCase()}`); if(el) el.classList.toggle('active',state.shopBuyAmount===v); });
   drawList('party',state.party,true); drawList('enemies',state.enemies,false); drawBattlefield();
@@ -946,7 +947,7 @@ function endWave(){
 
 $('startBtn').onclick=()=>{ if(!state.running && state.mode==='grind' && state.wave>state.highestWave) state.wave=state.highestWave||1; startWave(); };
 $('pauseBtn').onclick=()=>{ if(!state.running) return; state.paused=!state.paused; state.runtime.lastIdleReason=state.paused?'paused-by-user':'running'; $('pauseBtn').textContent=state.paused?'Resume':'Pause'; };
-$('speedBtn').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; loop(); draw(); save(); };
+$('speedLabel').onclick=()=>{ state.speed=state.speed===1?2:state.speed===2?3:1; if(state.running) loop(); draw(); save(); };
 $('autoSkillBtn').onclick=()=>{ state.autoSkillCast=!state.autoSkillCast; draw(); save(); };
 $('teamTalentsBtn').onclick=()=>openTeamTalentModal();
 $('modeBtn').onclick=()=>{ 

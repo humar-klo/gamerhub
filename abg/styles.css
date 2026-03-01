@@ -7,6 +7,7 @@ h1{margin:.2rem 0}
 #comboLabel{color:#ffd27a;text-shadow:0 0 10px rgba(255,192,96,.35)}
 button{background:#5d6dff;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
 button:hover{opacity:.92}
+.speed-pill{background:#3f4cbc;padding:4px 8px;border-radius:999px;font-size:.85rem;line-height:1}
 button:disabled{opacity:.45;cursor:not-allowed}
 button.danger{background:#a6425c}
 .debug-badge{margin-left:auto;font-size:.72rem;line-height:1.2;padding:5px 8px;border-radius:8px;background:#0b1020;border:1px solid #273258;color:#cfd9ff;min-width:170px;text-align:left}
