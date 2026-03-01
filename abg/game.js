@@ -22,7 +22,7 @@ const state={
 
 function mkHero(name,icon,hp,atk,skill){
   const equip={}; SLOTS.forEach(s=>equip[s]=null);
-  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,mana:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upManaLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upMana:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
+  return {name,icon,maxHp:hp,hp,atk,alive:true,skill,cd:0,abilityCd:0,tempShield:0,reviveGuardTurns:0,gearAtk:0,gearHp:0,gearCrit:0,lvl:1,xp:0,talentPts:0,advClass:null,equip,secondWindUsed:false,mana:0,setAtk:0,setHp:0,setCrit:0,setArmor:0,setSkillMult:0,setCdr:0,setLeech:0,upAtkLv:0,upHpLv:0,upManaLv:0,upCritLv:0,upCritDmgLv:0,upDefLv:0,upAtk:0,upHp:0,upMana:0,upCrit:0,upCritDmg:0,upDef:0,talents:{secondWind:false,bloodlust:false,echo:false,battleRhythm:false,giantSlayer:false,atkPctLv:0,hpPctLv:0,adv1:false,adv2:false,adv3:false}};
 }
 
 function talentPtsFromLevel(lvl){
@@ -249,7 +249,7 @@ function drawList(id,arr,isParty=true){
       <div>
         <div class='name'><img class='mini-ico' src='${u.icon}' alt=''> ${u.name}${u.boss?' 👑':''}${u.advClass?` • ${u.advClass}`:''}${!isParty?` • ${u.type}`:''}</div>
         <div class='hpbar'><span style='width:${isParty?clamp((Math.max(0,u.hp)/heroMaxHp(u))*100,0,100):clamp((Math.max(0,u.hp)/u.maxHp)*100,0,100)}%'></span></div>
-        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)}/${heroManaMax(u)}${u.tempShield?` • Shield ${u.tempShield}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.weakenTurns>0?` • Weakened ${u.weakenTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
+        ${isParty?`<small>Lv ${u.lvl} • XP ${u.xp}/${xpToNext(u)} • ATK ${heroAtk(u)} • Mana ${Math.floor(u.mana||0)}/${heroManaMax(u)}${u.tempShield?` • Shield ${u.tempShield}`:''}${u.reviveGuardTurns?` • Guard ${u.reviveGuardTurns}`:''}</small>`:`<small>ATK ${u.atk} • Armor ${enemyArmor(u)}${u.markedTurns>0?` • Marked ${u.markedTurns}`:''}${u.weakenTurns>0?` • Weakened ${u.weakenTurns}`:''}${u.affix?` • ${u.affix}`:''}</small>`}
       </div>
       ${isParty?`<div class='mini-actions party-actions'><button data-open-tal='${arr.indexOf(u)}' class='buyamt'>Talents (${u.talentPts||0})</button><button data-skill-hero='${arr.indexOf(u)}' class='buyamt' ${(!u.alive||u.abilityCd>0||!state.enemies.length||(u.mana||0)<BASE_SKILL_MANA)?'disabled':''} title='${skillTooltip(u)}'>${skillName(u)} ${u.abilityCd>0?`(${u.abilityCd})`:''}</button></div>`:''}
       <div>${isParty?'':(u.healer?'🪄':u.affix==='Frenzied'?'🔥':u.affix==='Bastion'?'🧱':u.affix==='Vampiric'?'🩸':'⚔️')}</div>
@@ -673,6 +673,7 @@ function enemyAttack(c,d){
   let dmg=c.atk;
   if((c.weakenTurns||0)>0) dmg=Math.floor(dmg*0.82);
   if(c.affix==='Frenzied' && c.hp/c.maxHp<0.5) dmg=Math.floor(dmg*1.18);
+  if((d.reviveGuardTurns||0)>0) dmg=Math.floor(dmg*0.4);
   if(d.skill==='block' && Math.random()<0.26){dmg=Math.floor(dmg*0.55); vfxAt(`p${state.party.indexOf(d)}`,'block');}
   if(d.tempShield>0){
     const absorbed=Math.min(dmg,d.tempShield); d.tempShield-=absorbed; dmg-=absorbed;
@@ -745,6 +746,7 @@ function step(){
     if(h.abilityCd>0) h.abilityCd=Math.max(0,h.abilityCd-1-(h.setCdr||0)-extraCdr);
     if(h.abilityCd>0 && Math.random()<((state.partyTalents.furyDrumsLv||0)*0.1)) h.abilityCd=Math.max(0,h.abilityCd-1);
     if(h.tempShield>0) h.tempShield=Math.max(0,h.tempShield-1);
+    if(h.reviveGuardTurns>0) h.reviveGuardTurns--;
   });
   state.enemies.forEach(x=>{ if(x.markedTurns>0) x.markedTurns--; if(x.weakenTurns>0) x.weakenTurns--; });
 
@@ -881,6 +883,8 @@ function endWave(){
       if(!h.alive || h.hp<=0){
         h.alive=true;
         h.hp=Math.ceil(heroMaxHp(h)*0.35);
+        h.reviveGuardTurns=5;
+        h.tempShield=(h.tempShield||0)+Math.ceil(heroMaxHp(h)*0.12);
       }
       h.hp=Math.min(heroMaxHp(h), h.hp + Math.ceil(heroMaxHp(h)*postWaveHeal));
       h.cd=0;
@@ -1138,6 +1142,7 @@ function normalizeLoadedState(){
     if(h.lvl==null) h.lvl=1; if(h.xp==null) h.xp=0; if(!h.advClass) h.advClass=null;
     if(h.secondWindUsed==null) h.secondWindUsed=false;
     if(h.abilityCd==null) h.abilityCd=0; if(h.tempShield==null) h.tempShield=0;
+    if(h.reviveGuardTurns==null) h.reviveGuardTurns=0;
     if(h.mana==null) h.mana=(h.focus==null?0:h.focus);
     if(h.focus!=null) delete h.focus;
     if(h.upAtkLv==null) h.upAtkLv=0; if(h.upHpLv==null) h.upHpLv=0; if(h.upManaLv==null) h.upManaLv=0; if(h.upCritLv==null) h.upCritLv=0; if(h.upCritDmgLv==null) h.upCritDmgLv=0; if(h.upDefLv==null) h.upDefLv=0;
